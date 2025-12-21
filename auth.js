@@ -2,7 +2,6 @@ import { initializeApp } from "https://www.gstatic.com/firebasejs/10.7.1/firebas
 import { 
   getAuth, 
   signInWithEmailAndPassword,
-  sendPasswordResetEmail,
   getMultiFactorResolver,
   PhoneAuthProvider,
   PhoneMultiFactorGenerator,
@@ -10,6 +9,7 @@ import {
   onAuthStateChanged
 } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-auth.js";
 
+// Ensure this matches your config precisely
 const firebaseConfig = {
   apiKey: "AIzaSyBg3KRIIvzkTA8OnrEBsln-aPcjU9DrBA4",
   authDomain: "netccusa.firebaseapp.com",
@@ -22,6 +22,7 @@ const auth = getAuth(app);
 // CHECK IF ALREADY LOGGED IN
 onAuthStateChanged(auth, (user) => {
   if (user) {
+    // If the user is already authenticated, send them straight to dashboard
     window.location.replace("dashboard.html");
   }
 });
@@ -31,7 +32,6 @@ window.recaptchaVerifier = new RecaptchaVerifier(auth, 'loginBtn', {
   'size': 'invisible'
 });
 
-// LOGIN LOGIC
 document.getElementById("loginBtn").addEventListener("click", async () => {
   const email = document.getElementById("email").value;
   const password = document.getElementById("password").value;
@@ -47,10 +47,12 @@ document.getElementById("loginBtn").addEventListener("click", async () => {
   } catch (err) {
     if (err.code === 'auth/multi-factor-auth-required') {
       const resolver = getMultiFactorResolver(auth, err);
+      
       const phoneInfoOptions = {
         multiFactorHint: resolver.hints[0],
         session: resolver.session
       };
+      
       const phoneAuthProvider = new PhoneAuthProvider(auth);
       const verificationId = await phoneAuthProvider.verifyPhoneNumber(phoneInfoOptions, window.recaptchaVerifier);
       
@@ -64,23 +66,5 @@ document.getElementById("loginBtn").addEventListener("click", async () => {
     } else {
       alert("Login Error: " + err.message);
     }
-  }
-});
-
-// FORGOT PASSWORD LOGIC
-document.getElementById("forgotPasswordBtn").addEventListener("click", async (e) => {
-  e.preventDefault();
-  const email = document.getElementById("email").value;
-
-  if (!email) {
-    alert("Please enter your email address in the field above first.");
-    return;
-  }
-
-  try {
-    await sendPasswordResetEmail(auth, email);
-    alert("Password reset link has been sent to your email.");
-  } catch (err) {
-    alert("Error: " + err.message);
   }
 });

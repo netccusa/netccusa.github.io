@@ -1,0 +1,141 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Register | NETC Portal</title>
+  <style>
+    body {
+      font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+      padding: 20px;
+      background-color: #001226;
+      text-align: center;
+      color: white;
+      min-height: 100vh;
+      margin: 0;
+      display: flex;
+      flex-direction: column;
+      justify-content: center;
+      align-items: center;
+    }
+
+    .center-logo { width: 120px; height: auto; border-radius: 50%; margin-bottom: 20px; }
+
+    .signup-container {
+      background: rgba(255, 255, 255, 0.05);
+      padding: 40px;
+      border-radius: 8px;
+      border-top: 3px solid #e2b13c;
+      width: 100%;
+      max-width: 350px;
+      box-shadow: 0 10px 30px rgba(0,0,0,0.5);
+    }
+
+    h2 { text-transform: uppercase; letter-spacing: 2px; color: #e2b13c; margin-bottom: 10px; }
+    p.subtitle { font-size: 13px; color: #cbd5e0; margin-bottom: 25px; }
+
+    input {
+      display: block;
+      margin: 15px auto;
+      padding: 12px;
+      width: 100%;
+      border-radius: 4px;
+      border: 1px solid #334e68;
+      background-color: #001e3c;
+      color: white;
+      box-sizing: border-box;
+    }
+
+    button {
+      margin-top: 15px;
+      padding: 14px;
+      width: 100%;
+      background-color: #e2b13c;
+      color: #001226;
+      border: none;
+      border-radius: 4px;
+      cursor: pointer;
+      font-weight: bold;
+      text-transform: uppercase;
+    }
+
+    .back-link { margin-top: 25px; font-size: 13px; }
+    .back-link a { color: #e2b13c; text-decoration: none; }
+
+    .version-footer { position: fixed; bottom: 15px; font-size: 11px; color: #4a5568; letter-spacing: 1px; }
+  </style>
+</head>
+<body>
+
+  <img src="netc.png" alt="NETC Seal" class="center-logo">
+
+  <div class="signup-container">
+    <h2>Personnel Registration</h2>
+    <p class="subtitle">Enter your authorized email to register.</p>
+    
+    <input id="email" type="email" placeholder="Authorized Email">
+    <input id="password" type="password" placeholder="Create Password">
+    <button id="signupBtn">Complete Registration</button>
+
+    <div class="back-link">
+      <a href="index.html">← Return to Login</a>
+    </div>
+  </div>
+
+  <div class="version-footer" id="appVersion"></div>
+
+  <script type="module">
+    import { initializeApp } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-app.js";
+    import { getAuth, createUserWithEmailAndPassword } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-auth.js";
+    import { getFirestore, doc, getDoc, setDoc, deleteDoc } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-firestore.js";
+    import firebaseConfig from './config.js';
+
+    const app = initializeApp(firebaseConfig);
+    const auth = getAuth(app);
+    const db = getFirestore(app);
+
+    document.getElementById("signupBtn").addEventListener("click", async () => {
+      const email = document.getElementById("email").value.toLowerCase().trim();
+      const password = document.getElementById("password").value;
+
+      if (!email || !password) return alert("All fields are required.");
+      if (password.length < 6) return alert("Password must be at least 6 characters.");
+
+      try {
+        // Check if authorized
+        const inviteRef = doc(db, "pending_invites", email);
+        const inviteSnap = await getDoc(inviteRef);
+
+        if (!inviteSnap.exists()) {
+          return alert("This email is not authorized. Contact a Command Admin.");
+        }
+
+        const inviteData = inviteSnap.data();
+        
+        // Create User
+        const userCredential = await createUserWithEmailAndPassword(auth, email, password);
+        const user = userCredential.user;
+
+        // Create User Profile with their Roblox ID
+        await setDoc(doc(db, "users", user.uid), {
+          email: email,
+          userid: inviteData.robloxUserId, // This matches your dashboard.h logic
+          role: "User",
+          registeredAt: new Date()
+        });
+
+        // Clean up invitation
+        await deleteDoc(inviteRef);
+
+        alert("Registration Successful. Access Granted.");
+        window.location.href = "dashboard.html";
+
+      } catch (err) {
+        alert("Registration Error: " + err.message);
+      }
+    });
+
+    document.getElementById('appVersion').textContent = `v${firebaseConfig.version || '1.0.0'} | Restricted Access`;
+  </script>
+</body>
+</html>

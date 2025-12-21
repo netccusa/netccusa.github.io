@@ -13,10 +13,12 @@
     h2 { text-transform: uppercase; letter-spacing: 2px; color: #e2b13c; font-size: 18px; }
     input, select, button { width: 100%; padding: 10px; margin-top: 5px; border-radius: 4px; border: 1px solid #334e68; background: #001e3c; color: white; box-sizing: border-box; }
     .action-btn { background: #e2b13c; color: #001226; font-weight: bold; cursor: pointer; border: none; }
-    .user-list-container, .log-queue { max-height: 300px; overflow-y: auto; text-align: left; background: rgba(0,0,0,0.2); padding: 10px; border-radius: 4px; }
+    .user-list-container, .log-queue { max-height: 400px; overflow-y: auto; text-align: left; background: rgba(0,0,0,0.2); padding: 10px; border-radius: 4px; }
     .card { background: rgba(255,255,255,0.05); padding: 10px; margin-bottom: 10px; border-left: 3px solid #e2b13c; font-size: 13px; }
     .approve-btn { background: #28a745; color: white; border: none; padding: 5px; cursor: pointer; margin-top: 5px; width: auto; margin-right: 5px; }
     .deny-btn { background: #dc3545; color: white; border: none; padding: 5px; cursor: pointer; margin-top: 5px; width: auto; }
+    .view-btn { background: #334e68; color: white; border: none; padding: 5px; cursor: pointer; margin-top: 5px; width: auto; margin-right: 5px; }
+    select.role-select { width: auto; padding: 2px; font-size: 11px; margin-left: 10px; }
   </style>
 </head>
 <body>
@@ -57,14 +59,14 @@
     import { 
       getFirestore, doc, getDoc, setDoc, collection, onSnapshot, 
       updateDoc, deleteDoc, addDoc, getDocs, writeBatch, increment,
-      query, where 
+      query, where, orderBy 
     } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-firestore.js";
     import firebaseConfig from './config.js';
 
     const app = initializeApp(firebaseConfig);
     const auth = getAuth(app);
     const db = getFirestore(app);
-    const hierarchy = ["user", "hicom", "director", "headquarters", "secnav", "admin"];
+    const roles = ["User", "HICOM", "Director", "Headquarters", "SECNAV", "Admin"];
     let myRole = "user";
 
     onAuthStateChanged(auth, async (user) => {
@@ -72,14 +74,15 @@
       const userSnap = await getDoc(doc(db, "users", user.uid));
       myRole = (userSnap.data()?.role || "user").toLowerCase();
       
-      if (!hierarchy.slice(1).includes(myRole)) window.location.replace("dashboard.html");
-      if (hierarchy.indexOf(myRole) >= 2) document.getElementById("typeManager").style.display = "block";
+      if (!["admin", "director", "hicom", "headquarters", "secnav"].includes(myRole)) window.location.replace("dashboard.html");
+      if (["admin", "director", "headquarters", "secnav"].includes(myRole)) document.getElementById("typeManager").style.display = "block";
 
       loadUsers();
       loadEventTypes();
       loadPendingLogs();
     });
 
+    // 1. Manage Event Types
     document.getElementById("addTypeBtn").onclick = async () => {
       const name = document.getElementById("newTypeName").value.trim();
       if (!name) return;
@@ -94,13 +97,19 @@
         snap.forEach(d => {
           const item = document.createElement("div");
           item.style.marginBottom = "5px";
-          item.innerHTML = `• ${d.data().name} <button style="width:auto; padding:2px; background:red; border:none; cursor:pointer;" onclick="window.deleteType('${d.id}')">X</button>`;
+          item.innerHTML = `• ${d.data().name} <button style="width:auto; padding:2px 8px; background:red; border:none; cursor:pointer;" onclick="window.confirmDeleteType('${d.id}', '${d.data().name}')">Delete</button>`;
           list.appendChild(item);
         });
       });
     }
-    window.deleteType = (id) => deleteDoc(doc(db, "event_types", id));
 
+    window.confirmDeleteType = (id, name) => {
+        if(confirm(`Are you sure you want to delete "${name}"? This cannot be undone.`)) {
+            deleteDoc(doc(db, "event_types", id));
+        }
+    };
+
+    // 2. Pending Logs & Image View
     function loadPendingLogs() {
       onSnapshot(collection(db, "event_pending"), (snap) => {
         const queue = document.getElementById("logQueue");
@@ -113,6 +122,7 @@
             <strong>Type:</strong> ${data.type}<br>
             <strong>Host:</strong> ${data.hostEmail}<br>
             <strong>Attendees:</strong> ${data.attendees} | <strong>Passers:</strong> ${data.passers}<br>
+            <button class="view-btn" onclick="window.viewProof('${d.id}')">View Proof</button>
             <button class="approve-btn" onclick="window.processLog('${d.id}', true)">Approve</button>
             <button class="deny-btn" onclick="window.processLog('${d.id}', false)">Deny</button>
           `;
@@ -120,6 +130,15 @@
         });
       });
     }
+
+    window.viewProof = async (logId) => {
+        const chunksSnap = await getDocs(query(collection(db, `event_pending/${logId}/chunks`), orderBy("index")));
+        let fullBase64 = "";
+        chunksSnap.forEach(chunk => fullBase64 += chunk.data().data);
+        
+        const win = window.open("");
+        win.document.write(`<img src="data:image/png;base64,${fullBase64}" style="max-width:100%;">`);
+    };
 
     window.processLog = async (logId, approved) => {
       try {
@@ -131,32 +150,21 @@
         if (approved) {
           const q = query(collection(db, "users"), where("email", "==", data.hostEmail));
           const userQuery = await getDocs(q);
-          
           const batch = writeBatch(db);
-          
-          if(!userQuery.empty) {
-            batch.update(userQuery.docs[0].ref, { totalEvents: increment(1) });
-          }
+          if(!userQuery.empty) batch.update(userQuery.docs[0].ref, { totalEvents: increment(1) });
           
           const historyRef = doc(collection(db, "event_history"));
-          batch.set(historyRef, { 
-            ...data, 
-            approvedAt: new Date(), 
-            approvedBy: auth.currentUser.email 
-          });
-          
+          batch.set(historyRef, { ...data, approvedAt: new Date(), approvedBy: auth.currentUser.email });
           batch.delete(logRef);
           await batch.commit();
         } else {
           await deleteDoc(logRef);
         }
         alert(approved ? "Log Approved" : "Log Denied");
-      } catch (e) {
-        console.error(e);
-        alert("Error: " + e.message);
-      }
+      } catch (e) { alert("Error: " + e.message); }
     };
 
+    // 3. User & Role Management
     async function loadUsers() {
       onSnapshot(collection(db, "users"), (snap) => {
         const list = document.getElementById("userList");
@@ -165,11 +173,25 @@
           const u = uDoc.data();
           const div = document.createElement("div");
           div.className = "card";
-          div.innerHTML = `<strong>${u.email}</strong><br>Role: ${u.role} | Events: ${u.totalEvents || 0}`;
+          
+          let roleOptions = roles.map(r => `<option value="${r}" ${u.role === r ? 'selected' : ''}>${r}</option>`).join('');
+          
+          div.innerHTML = `
+            <strong>${u.email}</strong><br>
+            Events: ${u.totalEvents || 0}
+            <select class="role-select" onchange="window.updateRole('${uDoc.id}', this.value)">
+                ${roleOptions}
+            </select>
+          `;
           list.appendChild(div);
         });
       });
     }
+
+    window.updateRole = async (uid, newRole) => {
+        await updateDoc(doc(db, "users", uid), { role: newRole });
+        alert("Role updated to " + newRole);
+    };
 
     document.getElementById("sendInviteBtn").onclick = async () => {
       const email = document.getElementById("inviteEmail").value.toLowerCase().trim();

@@ -10,23 +10,31 @@
     input, select, textarea { width: 100%; padding: 12px; margin-top: 5px; background: #001e3c; border: 1px solid #334e68; color: white; border-radius: 4px; box-sizing: border-box;}
     .submit-btn { width: 100%; padding: 15px; background: #e2b13c; color: #001226; border: none; font-weight: bold; margin-top: 20px; cursor: pointer; }
     .submit-btn:disabled { background: #4a5568; cursor: not-allowed; }
-    .nav-links { width: 100%; max-width: 500px; display: flex; justify-content: flex-start; margin-bottom: 10px; }
-    .btn-back { color: #e2b13c; text-decoration: none; font-size: 13px; }
+    .nav-links { width: 100%; max-width: 500px; display: flex; justify-content: flex-start; margin-bottom: 15px; }
+    .btn-back { color: #e2b13c; text-decoration: none; font-size: 14px; font-weight: bold; border: 1px solid #e2b13c; padding: 5px 10px; border-radius: 4px; }
   </style>
 </head>
 <body>
-  <div class="nav-links"><a href="dashboard.html" class="btn-back">← Back to Dashboard</a></div>
+  <div class="nav-links">
+    <a href="dashboard.html" class="btn-back">← BACK TO DASHBOARD</a>
+  </div>
+
   <div class="form-container">
     <h1>Event Submission</h1>
+    
     <label>Event Type</label>
     <select id="eventType"><option>Loading types...</option></select>
 
     <label>Co-Host(s)</label>
-    <select id="coHost" multiple style="height: 80px;"></select>
-    <small style="color:#718096">Hold Ctrl/Cmd to select multiple</small>
+    <select id="coHost" multiple style="height: 100px;">
+        <option value="None" selected>None</option>
+    </select>
+    <small style="color:#718096">Hold Ctrl/Cmd for multiple. Select 'None' if alone.</small>
 
     <label>Supervisor(s)</label>
-    <select id="supervisor" multiple style="height: 80px;"></select>
+    <select id="supervisor" multiple style="height: 100px;">
+        <option value="None" selected>None</option>
+    </select>
 
     <label>Attendees</label>
     <input type="number" id="attendees" placeholder="0">
@@ -68,8 +76,8 @@
         const usersSnap = await getDocs(query(collection(db, "users"), orderBy("email")));
         const coSelect = document.getElementById("coHost");
         const supSelect = document.getElementById("supervisor");
-        coSelect.innerHTML = "";
-        supSelect.innerHTML = "";
+        
+        // Don't clear "None"
         usersSnap.forEach(d => {
           const email = d.data().email;
           const opt = `<option value="${email}">${email}</option>`;
@@ -84,7 +92,7 @@
       const attendees = document.getElementById("attendees").value;
       const file = document.getElementById("proofFile").files[0];
 
-      if (!type || !attendees || !file) return alert("Please fill all required fields and upload proof.");
+      if (!type || !attendees || !file) return alert("Please fill all required fields.");
 
       const btn = document.getElementById("submitBtn");
       const status = document.getElementById("status");
@@ -112,7 +120,7 @@
           });
 
           for (let i = 0; i < totalChunks; i++) {
-            status.textContent = `Uploading proof: ${i+1}/${totalChunks}`;
+            status.textContent = `Uploading part ${i+1}/${totalChunks}`;
             await addDoc(collection(db, `event_pending/${logDoc.id}/chunks`), {
               index: i,
               data: rawData.substring(i * chunkSize, (i + 1) * chunkSize)

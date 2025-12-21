@@ -186,7 +186,7 @@
           document.getElementById("roleDisplay").textContent = userRole;
 
           // Show Admin Panel link only if user is an admin
-          if (userRole.toLowerCase() === "admin") {
+          if (userRole.toLowerCase() === "admin" || userRole.toLowerCase() === "director" || userRole.toLowerCase() === "hicom") {
             const adminLink = document.getElementById("adminLink");
             if (adminLink) adminLink.style.display = "block";
           }

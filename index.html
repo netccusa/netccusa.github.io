@@ -70,6 +70,11 @@
       cursor: pointer;
       font-weight: bold;
       text-transform: uppercase;
+      transition: 0.3s;
+    }
+
+    button:hover {
+      background-color: #f1c40f;
     }
 
     .signup-redirect {
@@ -95,7 +100,7 @@
 </head>
 <body>
 
-  <img src="https://lh3.googleusercontent.com/sitesv/AAzXCkeSksntaTMqW1oo1uFgl3Fmc2yKa4FUk_5MsgZ9L_DOopmfHoxoJwHn7Ub-qO--ydPYr1T3yoRKmN7znGt-y84zKXA2hr7irUxcFMxzHxKFWwRL2HoafEXa6LjQ1y8VIvpSd6ePg4-6Bd1ZTe3zTRK7-_6kzbIBbN--hzBd4zVbDh-ZnVbBdO08KEs=w16383" alt="NETC Command Seal" class="center-logo">
+  <img src="netc.png" alt="NETC Command Seal" class="center-logo">
 
   <div class="login-container">
     <h2>NETC Portal</h2>
@@ -112,7 +117,10 @@
 
   <script type="module">
     import firebaseConfig from './config.js';
-    document.getElementById('appVersion').textContent = `v${firebaseConfig.version || '1.0.0'} | Restricted Access`;
+    const versionEl = document.getElementById('appVersion');
+    if (versionEl) {
+      versionEl.textContent = `v${firebaseConfig.version || '1.0.0'} | Restricted Access`;
+    }
   </script>
   
   <script type="module" src="auth.js"></script>

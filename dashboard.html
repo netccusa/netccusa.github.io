@@ -130,7 +130,7 @@
   <img src="https://lh3.googleusercontent.com/sitesv/AAzXCkeSksntaTMqW1oo1uFgl3Fmc2yKa4FUk_5MsgZ9L_DOopmfHoxoJwHn7Ub-qO--ydPYr1T3yoRKmN7znGt-y84zKXA2hr7irUxcFMxzHxKFWwRL2HoafEXa6LjQ1y8VIvpSd6ePg4-6Bd1ZTe3zTRK7-_6kzbIBbN--hzBd4zVbDh-ZnVbBdO08KEs=w16383" alt="NETC Command Seal" class="center-logo">
 
   <div class="dashboard-container">
-    <h1>Command Dashboard</h1>
+    <h1>NETC Dashboard</h1>
     <div class="status-badge">System Status: Secure</div>
     
     <p id="welcome">Verifying credentials...</p>
@@ -155,44 +155,55 @@
     const auth = getAuth(app);
     const db = getFirestore(app);
 
+    let isLoggingOut = false;
+
     onAuthStateChanged(auth, async (user) => {
-      if (!user) { 
-        window.location.href = "index.html"; 
+      // If no user and we aren't already in the middle of a logout redirect
+      if (!user && !isLoggingOut) { 
+        window.location.replace("index.html"); 
         return; 
       }
 
-      document.getElementById("welcome").textContent = `Logged in as: ${user.email}`;
+      if (user) {
+        document.getElementById("welcome").textContent = `Logged in as: ${user.email}`;
 
-      try {
-        // Fetch user data from the 'users' collection using the UID
-        const userRef = doc(db, "users", user.uid);
-        const userSnap = await getDoc(userRef);
+        try {
+          const userRef = doc(db, "users", user.uid);
+          const userSnap = await getDoc(userRef);
 
-        if (userSnap.exists()) {
-          const userData = userSnap.data();
-          
-          // Display the role field string
-          const userRole = userData.role || "No Role Assigned";
-          document.getElementById("roleDisplay").textContent = userRole;
+          if (userSnap.exists()) {
+            const userData = userSnap.data();
+            const userRole = userData.role || "No Role Assigned";
+            document.getElementById("roleDisplay").textContent = userRole;
 
-          // If role is admin, show the admin panel link
-          if (userRole.toLowerCase() === "admin") {
-            document.getElementById("adminLink").style.display = "block";
+            if (userRole.toLowerCase() === "admin") {
+              document.getElementById("adminLink").style.display = "block";
+            }
+          } else {
+            document.getElementById("roleDisplay").textContent = "Profile Not Found";
           }
-        } else {
-          document.getElementById("roleDisplay").textContent = "Profile Not Found";
+        } catch (error) {
+          console.error("Error fetching user data:", error);
+          document.getElementById("roleDisplay").textContent = "Error Loading Role";
         }
-      } catch (error) {
-        console.error("Error fetching user data:", error);
-        document.getElementById("roleDisplay").textContent = "Error Loading Role";
       }
     });
 
-    document.getElementById("logoutBtn").addEventListener("click", () => {
-      signOut(auth).then(() => {
-        window.location.href = "index.html";
-      });
+    document.getElementById("logoutBtn").addEventListener("click", async () => {
+      try {
+        isLoggingOut = true; // Set flag to stop the observer from looping
+        document.getElementById("logoutBtn").textContent = "Logging out...";
+        await signOut(auth);
+        // Use replace instead of href to clear history stack
+        window.location.replace("index.html");
+      } catch (error) {
+        console.error("Logout failed", error);
+        isLoggingOut = false;
+        document.getElementById("logoutBtn").textContent = "Log Out of Portal";
+      }
     });
   </script>
+</body>
+</html>
 </body>
 </html>

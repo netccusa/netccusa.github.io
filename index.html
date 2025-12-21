@@ -8,7 +8,14 @@
     body {
       font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
       padding: 20px;
-      background-color: #001226;
+      /* Background setup */
+      background: 
+        linear-gradient(rgba(0, 18, 38, 0.85), rgba(0, 18, 38, 0.85)), 
+        url('bckgr.png');
+      background-size: cover;
+      background-position: center;
+      background-attachment: fixed;
+      
       text-align: center;
       color: white;
       min-height: 100vh;
@@ -27,24 +34,31 @@
       max-width: 80%;
       height: auto;
       border-radius: 50%;
+      /* Added a subtle glow to the logo */
+      filter: drop-shadow(0 0 10px rgba(226, 177, 60, 0.3));
     }
 
     h2 {
       text-transform: uppercase;
-      letter-spacing: 2px;
+      letter-spacing: 3px;
       margin-bottom: 30px;
       font-weight: 300;
       color: #e2b13c;
+      text-shadow: 0 2px 4px rgba(0,0,0,0.5);
     }
 
     .login-container {
-      background: rgba(255, 255, 255, 0.05);
+      /* Made the container slightly more glass-like */
+      background: rgba(0, 30, 60, 0.6);
+      backdrop-filter: blur(10px);
+      -webkit-backdrop-filter: blur(10px);
+      
       padding: 40px;
       border-radius: 8px;
       border-top: 3px solid #e2b13c;
       width: 100%;
       max-width: 350px;
-      box-shadow: 0 10px 30px rgba(0,0,0,0.5);
+      box-shadow: 0 20px 50px rgba(0,0,0,0.6);
     }
 
     input {
@@ -54,9 +68,15 @@
       width: 100%;
       border-radius: 4px;
       border: 1px solid #334e68;
-      background-color: #001e3c;
+      background-color: rgba(0, 30, 60, 0.8);
       color: white;
       box-sizing: border-box;
+      transition: border-color 0.3s;
+    }
+
+    input:focus {
+      outline: none;
+      border-color: #e2b13c;
     }
 
     button {
@@ -70,11 +90,14 @@
       cursor: pointer;
       font-weight: bold;
       text-transform: uppercase;
-      transition: 0.3s;
+      transition: all 0.3s ease;
+      box-shadow: 0 4px 15px rgba(226, 177, 60, 0.2);
     }
 
     button:hover {
       background-color: #f1c40f;
+      transform: translateY(-2px);
+      box-shadow: 0 6px 20px rgba(226, 177, 60, 0.4);
     }
 
     .signup-redirect {
@@ -93,7 +116,7 @@
       position: fixed;
       bottom: 15px;
       font-size: 11px;
-      color: #4a5568;
+      color: rgba(203, 213, 224, 0.5);
       letter-spacing: 1px;
     }
   </style>

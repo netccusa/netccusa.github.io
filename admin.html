@@ -13,12 +13,13 @@
     h2 { text-transform: uppercase; letter-spacing: 2px; color: #e2b13c; font-size: 18px; }
     input, select, button { width: 100%; padding: 10px; margin-top: 5px; border-radius: 4px; border: 1px solid #334e68; background: #001e3c; color: white; box-sizing: border-box; }
     .action-btn { background: #e2b13c; color: #001226; font-weight: bold; cursor: pointer; border: none; }
-    .user-list-container, .log-queue { max-height: 400px; overflow-y: auto; text-align: left; background: rgba(0,0,0,0.2); padding: 10px; border-radius: 4px; }
+    .user-list-container, .log-queue { max-height: 500px; overflow-y: auto; text-align: left; background: rgba(0,0,0,0.2); padding: 10px; border-radius: 4px; }
     .card { background: rgba(255,255,255,0.05); padding: 10px; margin-bottom: 10px; border-left: 3px solid #e2b13c; font-size: 13px; }
     .approve-btn { background: #28a745; color: white; border: none; padding: 5px; cursor: pointer; margin-top: 5px; width: auto; margin-right: 5px; }
     .deny-btn { background: #dc3545; color: white; border: none; padding: 5px; cursor: pointer; margin-top: 5px; width: auto; }
     .view-btn { background: #334e68; color: white; border: none; padding: 5px; cursor: pointer; margin-top: 5px; width: auto; margin-right: 5px; }
-    select.role-select { width: auto; padding: 2px; font-size: 11px; margin-left: 10px; }
+    .reset-btn { background: #6b46c1; color: white; border: none; padding: 3px 8px; cursor: pointer; font-size: 10px; margin-right: 4px; margin-top: 5px; border-radius: 3px; }
+    select.role-select { width: auto; padding: 2px; font-size: 11px; margin-left: 10px; background: #001226; }
   </style>
 </head>
 <body>
@@ -33,7 +34,10 @@
         <button class="action-btn" id="sendInviteBtn">Authorize</button>
       </div>
       <div class="admin-container">
-        <h2>Personnel Management</h2>
+        <div style="display: flex; justify-content: space-between; align-items: center;">
+            <h2>Personnel Management</h2>
+            <button class="reset-btn" id="resetAllWeeklyBtn" style="background: #e53e3e; padding: 5px 10px;">RESET ALL WEEKLY</button>
+        </div>
         <div id="userList" class="user-list-container">Loading...</div>
       </div>
     </div>
@@ -66,23 +70,96 @@
     const app = initializeApp(firebaseConfig);
     const auth = getAuth(app);
     const db = getFirestore(app);
+
     const roles = ["User", "HICOM", "Director", "Headquarters", "SECNAV", "Admin"];
-    let myRole = "user";
+    let currentUserUid = "";
+    let myRoleName = "User";
+    let myHierarchyIndex = 0;
 
     onAuthStateChanged(auth, async (user) => {
       if (!user) return window.location.replace("index.html");
+      currentUserUid = user.uid;
       const userSnap = await getDoc(doc(db, "users", user.uid));
-      myRole = (userSnap.data()?.role || "user").toLowerCase();
+      const data = userSnap.data();
+      myRoleName = data?.role || "User";
+      myHierarchyIndex = roles.indexOf(myRoleName);
       
-      if (!["admin", "director", "hicom", "headquarters", "secnav"].includes(myRole)) window.location.replace("dashboard.html");
-      if (["admin", "director", "headquarters", "secnav"].includes(myRole)) document.getElementById("typeManager").style.display = "block";
+      if (myHierarchyIndex < 1) window.location.replace("dashboard.html");
+      if (myHierarchyIndex >= 2) document.getElementById("typeManager").style.display = "block";
 
       loadUsers();
       loadEventTypes();
       loadPendingLogs();
     });
 
-    // 1. Manage Event Types
+    // Reset All Weekly Events
+    document.getElementById("resetAllWeeklyBtn").onclick = async () => {
+        if (!confirm("Are you sure you want to reset WEEKLY events for EVERYONE?")) return;
+        const usersSnap = await getDocs(collection(db, "users"));
+        const batch = writeBatch(db);
+        usersSnap.forEach(uDoc => {
+            batch.update(uDoc.ref, { weeklyEvents: 0 });
+        });
+        await batch.commit();
+        alert("All weekly events reset.");
+    };
+
+    // User Management
+    async function loadUsers() {
+      onSnapshot(collection(db, "users"), (snap) => {
+        const list = document.getElementById("userList");
+        list.innerHTML = "";
+        snap.forEach(uDoc => {
+          const u = uDoc.data();
+          const targetRoleIndex = roles.indexOf(u.role || "User");
+          const div = document.createElement("div");
+          div.className = "card";
+          
+          const isMe = uDoc.id === currentUserUid;
+          const canManage = !isMe && myHierarchyIndex > targetRoleIndex;
+
+          let roleHTML = `Role: ${u.role}`;
+          if (canManage) {
+            roleHTML = `<select class="role-select" onchange="window.updateRole('${uDoc.id}', this.value)">`;
+            roles.forEach((r, idx) => {
+                if (idx < myHierarchyIndex) {
+                    roleHTML += `<option value="${r}" ${u.role === r ? 'selected' : ''}>${r}</option>`;
+                }
+            });
+            roleHTML += `</select>`;
+          }
+
+          div.innerHTML = `
+            <strong>${u.email}</strong><br>
+            ${roleHTML}<br>
+            <div style="margin-top:5px; color:#cbd5e0;">
+                Career: ${u.totalEvents || 0} | Promotion: ${u.promoEvents || 0} | Weekly: ${u.weeklyEvents || 0}
+            </div>
+            ${canManage ? `
+                <button class="reset-btn" onclick="window.resetStat('${uDoc.id}', 'weeklyEvents')">Reset Weekly</button>
+                <button class="reset-btn" onclick="window.resetStat('${uDoc.id}', 'promoEvents')">Reset Promo</button>
+                <button class="reset-btn" onclick="window.resetStat('${uDoc.id}', 'totalEvents')">Reset Career</button>
+            ` : ''}
+          `;
+          list.appendChild(div);
+        });
+      });
+    }
+
+    window.updateRole = async (uid, newRole) => {
+        if (confirm(`Change this user's role to ${newRole}?`)) {
+            await updateDoc(doc(db, "users", uid), { role: newRole });
+        }
+    };
+
+    window.resetStat = async (uid, field) => {
+        const label = field === 'totalEvents' ? 'CAREER' : field === 'promoEvents' ? 'PROMOTION' : 'WEEKLY';
+        if (confirm(`Are you sure you want to reset ${label} events for this user?`)) {
+            await updateDoc(doc(db, "users", uid), { [field]: 0 });
+        }
+    };
+
+    // Event Types Logic
     document.getElementById("addTypeBtn").onclick = async () => {
       const name = document.getElementById("newTypeName").value.trim();
       if (!name) return;
@@ -104,12 +181,12 @@
     }
 
     window.confirmDeleteType = (id, name) => {
-        if(confirm(`Are you sure you want to delete "${name}"? This cannot be undone.`)) {
+        if(confirm(`Are you sure you want to delete "${name}"?`)) {
             deleteDoc(doc(db, "event_types", id));
         }
     };
 
-    // 2. Pending Logs & Image View
+    // Approval Logic
     function loadPendingLogs() {
       onSnapshot(collection(db, "event_pending"), (snap) => {
         const queue = document.getElementById("logQueue");
@@ -121,7 +198,8 @@
           card.innerHTML = `
             <strong>Type:</strong> ${data.type}<br>
             <strong>Host:</strong> ${data.hostEmail}<br>
-            <strong>Attendees:</strong> ${data.attendees} | <strong>Passers:</strong> ${data.passers}<br>
+            <strong>Co-Hosts:</strong> ${data.coHosts?.join(", ") || "None"}<br>
+            <strong>Supervisor:</strong> ${data.supervisors?.join(", ") || "None"}<br>
             <button class="view-btn" onclick="window.viewProof('${d.id}')">View Proof</button>
             <button class="approve-btn" onclick="window.processLog('${d.id}', true)">Approve</button>
             <button class="deny-btn" onclick="window.processLog('${d.id}', false)">Deny</button>
@@ -135,7 +213,6 @@
         const chunksSnap = await getDocs(query(collection(db, `event_pending/${logId}/chunks`), orderBy("index")));
         let fullBase64 = "";
         chunksSnap.forEach(chunk => fullBase64 += chunk.data().data);
-        
         const win = window.open("");
         win.document.write(`<img src="data:image/png;base64,${fullBase64}" style="max-width:100%;">`);
     };
@@ -148,10 +225,27 @@
         const data = logSnap.data();
 
         if (approved) {
-          const q = query(collection(db, "users"), where("email", "==", data.hostEmail));
-          const userQuery = await getDocs(q);
           const batch = writeBatch(db);
-          if(!userQuery.empty) batch.update(userQuery.docs[0].ref, { totalEvents: increment(1) });
+          
+          // List all people who get +1 (Host, Co-Hosts, Supervisors)
+          let participants = [data.hostEmail];
+          if (data.coHosts) participants = participants.concat(data.coHosts);
+          if (data.supervisors) participants = participants.concat(data.supervisors);
+          
+          // Filter out "None" and duplicates
+          participants = [...new Set(participants.filter(e => e && e !== "None"))];
+
+          for (const email of participants) {
+            const q = query(collection(db, "users"), where("email", "==", email));
+            const uSnap = await getDocs(q);
+            if (!uSnap.empty) {
+                batch.update(uSnap.docs[0].ref, { 
+                    totalEvents: increment(1),
+                    promoEvents: increment(1),
+                    weeklyEvents: increment(1)
+                });
+            }
+          }
           
           const historyRef = doc(collection(db, "event_history"));
           batch.set(historyRef, { ...data, approvedAt: new Date(), approvedBy: auth.currentUser.email });
@@ -160,37 +254,8 @@
         } else {
           await deleteDoc(logRef);
         }
-        alert(approved ? "Log Approved" : "Log Denied");
+        alert(approved ? "Log Approved and Stats Updated" : "Log Denied");
       } catch (e) { alert("Error: " + e.message); }
-    };
-
-    // 3. User & Role Management
-    async function loadUsers() {
-      onSnapshot(collection(db, "users"), (snap) => {
-        const list = document.getElementById("userList");
-        list.innerHTML = "";
-        snap.forEach(uDoc => {
-          const u = uDoc.data();
-          const div = document.createElement("div");
-          div.className = "card";
-          
-          let roleOptions = roles.map(r => `<option value="${r}" ${u.role === r ? 'selected' : ''}>${r}</option>`).join('');
-          
-          div.innerHTML = `
-            <strong>${u.email}</strong><br>
-            Events: ${u.totalEvents || 0}
-            <select class="role-select" onchange="window.updateRole('${uDoc.id}', this.value)">
-                ${roleOptions}
-            </select>
-          `;
-          list.appendChild(div);
-        });
-      });
-    }
-
-    window.updateRole = async (uid, newRole) => {
-        await updateDoc(doc(db, "users", uid), { role: newRole });
-        alert("Role updated to " + newRole);
     };
 
     document.getElementById("sendInviteBtn").onclick = async () => {

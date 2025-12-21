@@ -157,20 +157,26 @@
     const GROUP_ID = 34799343;
     let isLoggingOut = false;
 
-    // Helper function to fetch Roblox Rank Name
+    // Helper function to fetch Roblox Rank Name using a CORS Proxy
     async function getRobloxRank(robloxUserId) {
         try {
-            // Using a public proxy to bypass CORS restrictions
-            const response = await fetch(`https://groups.roproxy.com/v2/users/${robloxUserId}/groups/roles`);
+            // We use a CORS proxy to bypass browser security restrictions
+            const corsProxy = "https://corsproxy.io/?";
+            const robloxApi = `https://groups.roproxy.com/v1/users/${robloxUserId}/groups/roles`;
+            
+            const response = await fetch(corsProxy + encodeURIComponent(robloxApi));
+            
+            if (!response.ok) throw new Error("Proxy response was not ok");
+            
             const result = await response.json();
             
-            // Find the specific group in the user's group list
+            // Filter for your specific Group ID: 34799343
             const groupData = result.data.find(g => g.group.id === GROUP_ID);
             
             return groupData ? groupData.role.name : "Guest/Non-Member";
         } catch (error) {
             console.error("Roblox API Error:", error);
-            return "Unknown Rank";
+            return "Rank Unavailable";
         }
     }
 

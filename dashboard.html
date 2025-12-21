@@ -20,6 +20,7 @@
     #logoutBtn { margin-top: 20px; padding: 12px 30px; background: transparent; color: #ff4d4d; border: 1px solid #ff4d4d; border-radius: 4px; cursor: pointer; font-weight: bold; transition: 0.3s; }
     #logoutBtn:hover { background: #ff4d4d; color: white; }
     .version-footer { position: fixed; bottom: 15px; font-size: 11px; color: #4a5568; letter-spacing: 1px; }
+    .btn-group { display: flex; gap: 10px; flex-direction: column; margin-bottom: 20px; }
   </style>
 </head>
 <body>
@@ -50,9 +51,16 @@
         <small>CAREER EVENTS</small>
         <div id="careerCount">0</div>
       </div>
+      <div class="stat-box" style="border-color: #6b46c1; background: rgba(107, 70, 193, 0.1);">
+        <small style="color:#9f7aea">CAREER MINUTES</small>
+        <div id="minutesCount" style="color: #9f7aea;">0</div>
+      </div>
     </div>
 
-    <a href="eventlogs.html" class="btn-small" style="display: block; margin-bottom: 20px;">Submit Event Log</a>
+    <div class="btn-group">
+        <a href="eventlogs.html" class="btn-small">Submit Event Log</a>
+        <a href="minuteslogs.html" class="btn-small" style="border-color: #9f7aea; color: #9f7aea;">Submit Minutes Log</a>
+    </div>
 
     <div style="text-align: left; margin-top: 20px;">
       <h3 style="color: #e2b13c; font-size: 14px;">RECENT NETWORK ACTIVITY</h3>
@@ -86,6 +94,9 @@
             document.getElementById("careerCount").textContent = data.totalEvents || 0;
             document.getElementById("promoCount").textContent = data.promoEvents || 0;
             document.getElementById("weeklyCount").textContent = data.weeklyEvents || 0;
+            // UPDATE MINUTES
+            document.getElementById("minutesCount").textContent = data.totalMinutes || 0;
+            
             document.getElementById("roleDisplay").textContent = data.role || "User";
 
             const adminRanks = ["admin", "director", "hicom", "headquarters", "secnav"];

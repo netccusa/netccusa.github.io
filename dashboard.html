@@ -123,7 +123,6 @@
 <body>
 
   <div class="nav-links">
-    <a href="settings.html" class="btn-small">Security Settings</a>
     <a href="admin.html" id="adminLink" class="btn-small" style="display: none;">Admin Panel</a>
   </div>
 
@@ -157,10 +156,8 @@
     const GROUP_ID = 34799343;
     let isLoggingOut = false;
 
-    // Helper function to fetch Roblox Rank Name using a robust proxy method
     async function getRobloxRank(robloxUserId) {
         try {
-            // Using AllOrigins as it handles CORS very effectively for static sites
             const robloxApi = `https://groups.roproxy.com/v1/users/${robloxUserId}/groups/roles`;
             const proxyUrl = `https://api.allorigins.win/get?url=${encodeURIComponent(robloxApi)}`;
             
@@ -168,7 +165,7 @@
             if (!response.ok) throw new Error("Proxy error");
             
             const wrapper = await response.json();
-            const result = JSON.parse(wrapper.contents); // AllOrigins wraps the JSON in a 'contents' string
+            const result = JSON.parse(wrapper.contents);
             
             const groupData = result.data.find(g => g.group.id === GROUP_ID);
             return groupData ? groupData.role.name : "Guest/Non-Member";
@@ -203,7 +200,6 @@
                     document.getElementById("roleDisplay").textContent = portalRole;
                 }
 
-                // Show Admin Panel logic
                 const adminRanks = ["admin", "director", "hicom"];
                 if (adminRanks.includes(portalRole.toLowerCase())) {
                     const adminLink = document.getElementById("adminLink");
@@ -227,7 +223,6 @@
         }
     });
 
-    // Version UI update
     const versionEl = document.getElementById('appVersion');
     if (versionEl) {
       versionEl.textContent = `v${firebaseConfig.version || '1.0.0'} | Authorized Personnel Only`;

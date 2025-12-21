@@ -2,37 +2,78 @@
 <html lang="en">
 <head>
   <meta charset="UTF-8">
-  <title>Submit Minutes Log | NETC</title>
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Submit Minutes Log | NETC Portal</title>
   <style>
-    body { font-family: 'Segoe UI', sans-serif; background: #001226; color: white; padding: 20px; display: flex; flex-direction: column; align-items: center; }
-    .form-container { background: rgba(255,255,255,0.05); padding: 30px; border-radius: 8px; border-top: 3px solid #e2b13c; width: 100%; max-width: 500px; }
-    label { display: block; margin-top: 15px; font-size: 12px; color: #e2b13c; text-transform: uppercase; }
-    input, select, textarea { width: 100%; padding: 12px; margin-top: 5px; background: #001e3c; border: 1px solid #334e68; color: white; border-radius: 4px; box-sizing: border-box;}
-    .submit-btn { width: 100%; padding: 15px; background: #e2b13c; color: #001226; border: none; font-weight: bold; margin-top: 20px; cursor: pointer; }
-    .submit-btn:disabled { background: #4a5568; cursor: not-allowed; }
-    .nav-links { width: 100%; max-width: 500px; display: flex; justify-content: flex-start; margin-bottom: 15px; }
-    .btn-back { color: #e2b13c; text-decoration: none; font-size: 14px; font-weight: bold; border: 1px solid #e2b13c; padding: 5px 10px; border-radius: 4px; }
+    @keyframes fadeIn {
+      from { opacity: 0; transform: translateY(10px); }
+      to { opacity: 1; transform: translateY(0); }
+    }
+
+    body { 
+      font-family: 'Segoe UI', sans-serif; 
+      padding: 20px; 
+      text-align: center; 
+      background: linear-gradient(rgba(0, 18, 38, 0.9), rgba(0, 18, 38, 0.9)), url('bckgr3.png');
+      background-size: cover;
+      background-position: center;
+      background-attachment: fixed;
+      color: white; 
+      min-height: 100vh; 
+      margin: 0; 
+      display: flex; 
+      flex-direction: column; 
+      align-items: center; 
+    }
+
+    .nav-links { width: 100%; max-width: 550px; display: flex; justify-content: flex-start; margin-bottom: 20px; animation: fadeIn 0.8s ease-out forwards; }
+    .btn-back { padding: 8px 16px; background-color: rgba(255, 255, 255, 0.1); color: #9f7aea; border: 1px solid #9f7aea; border-radius: 4px; cursor: pointer; text-decoration: none; font-size: 13px; text-transform: uppercase; transition: 0.3s; font-weight: bold; }
+    .btn-back:hover { background-color: #9f7aea; color: white; }
+
+    .form-container { 
+      background: rgba(0, 30, 60, 0.6);
+      backdrop-filter: blur(10px);
+      -webkit-backdrop-filter: blur(10px);
+      padding: 40px; 
+      border-radius: 8px; 
+      border-top: 3px solid #9f7aea; 
+      width: 100%; 
+      max-width: 500px; 
+      box-shadow: 0 20px 50px rgba(0,0,0,0.6); 
+      animation: fadeIn 1.2s ease-out forwards;
+      text-align: left;
+    }
+
+    h1 { text-transform: uppercase; letter-spacing: 2px; color: #9f7aea; margin-top: 0; text-shadow: 0 2px 4px rgba(0,0,0,0.5); font-size: 24px; text-align: center; }
+    label { display: block; margin-top: 20px; font-size: 11px; color: #9f7aea; text-transform: uppercase; letter-spacing: 1px; font-weight: bold; }
+    input, select { width: 100%; padding: 12px; margin-top: 8px; background: rgba(0, 0, 0, 0.3); border: 1px solid rgba(159, 122, 234, 0.3); color: white; border-radius: 4px; box-sizing: border-box; font-family: inherit; }
+    input:focus { border-color: #9f7aea; outline: none; background: rgba(0, 0, 0, 0.5); }
+    
+    .submit-btn { width: 100%; padding: 15px; background: #9f7aea; color: white; border: none; font-weight: bold; margin-top: 30px; cursor: pointer; text-transform: uppercase; letter-spacing: 1px; transition: 0.3s; border-radius: 4px; }
+    .submit-btn:hover { background: #b794f4; transform: translateY(-2px); }
+    .submit-btn:disabled { background: #4a5568; cursor: not-allowed; transform: none; }
   </style>
 </head>
 <body>
+
   <div class="nav-links">
-    <a href="dashboard.html" class="btn-back">← BACK TO DASHBOARD</a>
+    <a href="dashboard.html" class="btn-back">← Back to Dashboard</a>
   </div>
 
   <div class="form-container">
     <h1>Minutes Submission</h1>
     
-    <label>Minutes Description / Activity</label>
-    <input type="text" id="minType" placeholder="e.g. Activity Watch / Security Patrol">
+    <label>Activity Description</label>
+    <input type="text" id="minType" placeholder="e.g. Patrol / Sentry Duty / Recruitment">
 
-    <label>Amount of Minutes</label>
-    <input type="number" id="minutesAmount" placeholder="e.g. 30">
+    <label>Duration (Minutes)</label>
+    <input type="number" id="minutesAmount" placeholder="30">
 
-    <label>Proof (Image)</label>
+    <label>Evidence (Image)</label>
     <input type="file" id="proofFile" accept="image/*">
 
-    <button id="submitBtn" class="submit-btn">Submit Minutes for Approval</button>
-    <p id="status" style="font-size:12px; margin-top:10px;"></p>
+    <button id="submitBtn" class="submit-btn">Transmit Minutes Log</button>
+    <p id="status" style="font-size:12px; margin-top:15px; text-align: center; color: #9f7aea;"></p>
   </div>
 
   <script type="module">
@@ -59,7 +100,7 @@
       const btn = document.getElementById("submitBtn");
       const status = document.getElementById("status");
       btn.disabled = true;
-      status.textContent = "Processing Minutes Log...";
+      status.textContent = "UPLOADING ACTIVITY DATA...";
 
       const reader = new FileReader();
       reader.readAsDataURL(file);
@@ -76,18 +117,18 @@
             fileName: file.name,
             totalChunks: totalChunks,
             submittedAt: new Date(),
-            logCategory: "minutes" // Used for differentiation in history
+            logCategory: "minutes"
           });
 
           for (let i = 0; i < totalChunks; i++) {
-            status.textContent = `Uploading part ${i+1}/${totalChunks}`;
+            status.textContent = `UPLOADING: PART ${i+1}/${totalChunks}`;
             await addDoc(collection(db, `minutes_pending/${logDoc.id}/chunks`), {
               index: i,
               data: rawData.substring(i * chunkSize, (i + 1) * chunkSize)
             });
           }
 
-          alert("Minutes submitted for review.");
+          alert("Minutes logged and sent for verification.");
           window.location.href = "dashboard.html";
         } catch (e) {
           btn.disabled = false;

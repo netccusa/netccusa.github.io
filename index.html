@@ -5,10 +5,15 @@
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title>Login | Naval Education and Training Command</title>
   <style>
+    /* Animation Keyframes */
+    @keyframes fadeIn {
+      from { opacity: 0; transform: translateY(10px); }
+      to { opacity: 1; transform: translateY(0); }
+    }
+
     body {
       font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
       padding: 20px;
-      /* Background setup */
       background: 
         linear-gradient(rgba(0, 18, 38, 0.85), rgba(0, 18, 38, 0.85)), 
         url('bckgr.png');
@@ -34,8 +39,26 @@
       max-width: 80%;
       height: auto;
       border-radius: 50%;
-      /* Added a subtle glow to the logo */
       filter: drop-shadow(0 0 10px rgba(226, 177, 60, 0.3));
+      /* Apply animation to logo */
+      animation: fadeIn 0.8s ease-out forwards;
+    }
+
+    .login-container {
+      background: rgba(0, 30, 60, 0.6);
+      backdrop-filter: blur(10px);
+      -webkit-backdrop-filter: blur(10px);
+      
+      padding: 40px;
+      border-radius: 8px;
+      border-top: 3px solid #e2b13c;
+      width: 100%;
+      max-width: 350px;
+      box-shadow: 0 20px 50px rgba(0,0,0,0.6);
+      
+      /* Apply animation with a slight delay for a staggered effect */
+      opacity: 0;
+      animation: fadeIn 1s ease-out 0.3s forwards;
     }
 
     h2 {
@@ -47,36 +70,23 @@
       text-shadow: 0 2px 4px rgba(0,0,0,0.5);
     }
 
-    .login-container {
-      /* Made the container slightly more glass-like */
-      background: rgba(0, 30, 60, 0.6);
-      backdrop-filter: blur(10px);
-      -webkit-backdrop-filter: blur(10px);
-      
-      padding: 40px;
-      border-radius: 8px;
-      border-top: 3px solid #e2b13c;
-      width: 100%;
-      max-width: 350px;
-      box-shadow: 0 20px 50px rgba(0,0,0,0.6);
-    }
-
     input {
       display: block;
       margin: 15px auto;
       padding: 12px;
       width: 100%;
       border-radius: 4px;
-      border: 1px solid #334e68;
+      border: 1px solid rgba(51, 78, 104, 0.5);
       background-color: rgba(0, 30, 60, 0.8);
       color: white;
       box-sizing: border-box;
-      transition: border-color 0.3s;
+      transition: border-color 0.3s, box-shadow 0.3s;
     }
 
     input:focus {
       outline: none;
       border-color: #e2b13c;
+      box-shadow: 0 0 8px rgba(226, 177, 60, 0.2);
     }
 
     button {
@@ -118,6 +128,8 @@
       font-size: 11px;
       color: rgba(203, 213, 224, 0.5);
       letter-spacing: 1px;
+      opacity: 0;
+      animation: fadeIn 1.2s ease-out 0.6s forwards;
     }
   </style>
 </head>

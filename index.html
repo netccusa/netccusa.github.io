@@ -6,7 +6,6 @@
   <title>Login | Naval Education and Training Command</title>
   <link rel="manifest" href="manifest.json">
   <meta name="theme-color" content="#002147">
-  <link rel="stylesheet" href="style.css">
   <style>
     body {
       font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
@@ -26,9 +25,10 @@
     .center-logo {
       display: block;
       margin-bottom: 20px;
-      width: 150px; /* Adjusted for a standard crest size */
+      width: 150px; 
       max-width: 80%;
       height: auto;
+      border-radius: 50%; /* Added in case the new logo is a profile-style circular image */
     }
 
     h2 {
@@ -46,6 +46,7 @@
       border-top: 3px solid #e2b13c;
       width: 100%;
       max-width: 350px;
+      box-shadow: 0 10px 30px rgba(0,0,0,0.5);
     }
 
     input {
@@ -109,8 +110,8 @@
 </head>
 <body>
 
-  <img src="https://upload.wikimedia.org/wikipedia/commons/thumb/0/09/Seal_of_the_United_States_Naval_Education_and_Training_Command.svg/1200px-Seal_of_the_United_States_Naval_Education_and_Training_Command.svg.png" 
-       alt="NETC Logo" 
+  <img src="https://lh3.googleusercontent.com/sitesv/AAzXCkeSksntaTMqW1oo1uFgl3Fmc2yKa4FUk_5MsgZ9L_DOopmfHoxoJwHn7Ub-qO--ydPYr1T3yoRKmN7znGt-y84zKXA2hr7irUxcFMxzHxKFWwRL2HoafEXa6LjQ1y8VIvpSd6ePg4-6Bd1ZTe3zTRK7-_6kzbIBbN--hzBd4zVbDh-ZnVbBdO08KEs=w16383" 
+       alt="NETC Command Seal" 
        class="center-logo">
 
   <div class="login-container">
@@ -130,7 +131,9 @@
 
   <script type="module">
     import firebaseConfig from './config.js';
-    document.getElementById('appVersion').textContent = `v${firebaseConfig.version || '1.0.0'} | Restricted Access`;
+    // Safety check for version string
+    const version = firebaseConfig.version || '1.0.0';
+    document.getElementById('appVersion').textContent = `v${version} | Restricted Access`;
   </script>
   
   <script type="module" src="auth.js"></script>

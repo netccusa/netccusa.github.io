@@ -9,7 +9,7 @@ import {
   onAuthStateChanged
 } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-auth.js";
 
-// Make sure this matches your config precisely
+// Ensure this matches your config precisely
 const firebaseConfig = {
   apiKey: "AIzaSyBg3KRIIvzkTA8OnrEBsln-aPcjU9DrBA4",
   authDomain: "netccusa.firebaseapp.com",
@@ -20,14 +20,14 @@ const app = initializeApp(firebaseConfig);
 const auth = getAuth(app);
 
 // CHECK IF ALREADY LOGGED IN
-// This prevents the "spazzing" by moving logged-in users away from the login page
 onAuthStateChanged(auth, (user) => {
   if (user) {
+    // If the user is already authenticated, send them straight to dashboard
     window.location.replace("dashboard.html");
   }
 });
 
-// Initialize Recaptcha
+// Initialize Recaptcha for the login button
 window.recaptchaVerifier = new RecaptchaVerifier(auth, 'loginBtn', {
   'size': 'invisible'
 });

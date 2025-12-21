@@ -38,7 +38,7 @@
             <h2>Personnel Management</h2>
             <button class="reset-btn" id="resetAllWeeklyBtn" style="background: #e53e3e; padding: 5px 10px;">RESET ALL WEEKLY</button>
         </div>
-        <div id="userList" class="user-list-container">Loading...</div>
+        <div id="userList" class="user-list-container">Loading personnel...</div>
       </div>
     </div>
 
@@ -71,6 +71,7 @@
     const auth = getAuth(app);
     const db = getFirestore(app);
 
+    // Roles listed from lowest to highest hierarchy
     const roles = ["User", "HICOM", "Director", "Headquarters", "SECNAV", "Admin"];
     let currentUserUid = "";
     let myRoleName = "User";
@@ -78,14 +79,28 @@
 
     onAuthStateChanged(auth, async (user) => {
       if (!user) return window.location.replace("index.html");
+      
       currentUserUid = user.uid;
+      
+      // CRITICAL: Await the user document before checking roles
       const userSnap = await getDoc(doc(db, "users", user.uid));
+      if (!userSnap.exists()) return window.location.replace("dashboard.html");
+      
       const data = userSnap.data();
+      // Use proper casing for roles check
       myRoleName = data?.role || "User";
       myHierarchyIndex = roles.indexOf(myRoleName);
       
-      if (myHierarchyIndex < 1) window.location.replace("dashboard.html");
-      if (myHierarchyIndex >= 2) document.getElementById("typeManager").style.display = "block";
+      // If user is just a 'User' (index 0), kick to dashboard
+      if (myHierarchyIndex < 1) {
+          window.location.replace("dashboard.html");
+          return;
+      }
+
+      // Show management tools for Director+ (Index 2+)
+      if (myHierarchyIndex >= 2) {
+          document.getElementById("typeManager").style.display = "block";
+      }
 
       loadUsers();
       loadEventTypes();
@@ -94,14 +109,15 @@
 
     // Reset All Weekly Events
     document.getElementById("resetAllWeeklyBtn").onclick = async () => {
-        if (!confirm("Are you sure you want to reset WEEKLY events for EVERYONE?")) return;
+        if (!confirm("CONFIRMATION: Are you sure you want to reset WEEKLY events for EVERYONE? This cannot be undone.")) return;
+        
         const usersSnap = await getDocs(collection(db, "users"));
         const batch = writeBatch(db);
         usersSnap.forEach(uDoc => {
             batch.update(uDoc.ref, { weeklyEvents: 0 });
         });
         await batch.commit();
-        alert("All weekly events reset.");
+        alert("Success: All weekly counters have been reset.");
     };
 
     // User Management
@@ -116,12 +132,14 @@
           div.className = "card";
           
           const isMe = uDoc.id === currentUserUid;
+          // Rule: Cannot manage self, and cannot manage anyone equal or higher in rank
           const canManage = !isMe && myHierarchyIndex > targetRoleIndex;
 
           let roleHTML = `Role: ${u.role}`;
           if (canManage) {
-            roleHTML = `<select class="role-select" onchange="window.updateRole('${uDoc.id}', this.value)">`;
+            roleHTML = `<select class="role-select" onchange="window.updateRole('${uDoc.id}', this.value, '${u.email}')">`;
             roles.forEach((r, idx) => {
+                // Only allow setting roles LOWER than your own
                 if (idx < myHierarchyIndex) {
                     roleHTML += `<option value="${r}" ${u.role === r ? 'selected' : ''}>${r}</option>`;
                 }
@@ -133,12 +151,12 @@
             <strong>${u.email}</strong><br>
             ${roleHTML}<br>
             <div style="margin-top:5px; color:#cbd5e0;">
-                Career: ${u.totalEvents || 0} | Promotion: ${u.promoEvents || 0} | Weekly: ${u.weeklyEvents || 0}
+                Career: ${u.totalEvents || 0} | Promo: ${u.promoEvents || 0} | Weekly: ${u.weeklyEvents || 0}
             </div>
             ${canManage ? `
-                <button class="reset-btn" onclick="window.resetStat('${uDoc.id}', 'weeklyEvents')">Reset Weekly</button>
-                <button class="reset-btn" onclick="window.resetStat('${uDoc.id}', 'promoEvents')">Reset Promo</button>
-                <button class="reset-btn" onclick="window.resetStat('${uDoc.id}', 'totalEvents')">Reset Career</button>
+                <button class="reset-btn" onclick="window.resetStat('${uDoc.id}', 'weeklyEvents', '${u.email}')">Reset Weekly</button>
+                <button class="reset-btn" onclick="window.resetStat('${uDoc.id}', 'promoEvents', '${u.email}')">Reset Promo</button>
+                <button class="reset-btn" onclick="window.resetStat('${uDoc.id}', 'totalEvents', '${u.email}')">Reset Career</button>
             ` : ''}
           `;
           list.appendChild(div);
@@ -146,16 +164,18 @@
       });
     }
 
-    window.updateRole = async (uid, newRole) => {
-        if (confirm(`Change this user's role to ${newRole}?`)) {
+    window.updateRole = async (uid, newRole, email) => {
+        if (confirm(`Are you sure you want to change ${email}'s role to ${newRole}?`)) {
             await updateDoc(doc(db, "users", uid), { role: newRole });
+            alert("Role updated successfully.");
         }
     };
 
-    window.resetStat = async (uid, field) => {
+    window.resetStat = async (uid, field, email) => {
         const label = field === 'totalEvents' ? 'CAREER' : field === 'promoEvents' ? 'PROMOTION' : 'WEEKLY';
-        if (confirm(`Are you sure you want to reset ${label} events for this user?`)) {
+        if (confirm(`CONFIRMATION: Reset ${label} events for ${email}?`)) {
             await updateDoc(doc(db, "users", uid), { [field]: 0 });
+            alert(`${label} events reset.`);
         }
     };
 
@@ -181,7 +201,7 @@
     }
 
     window.confirmDeleteType = (id, name) => {
-        if(confirm(`Are you sure you want to delete "${name}"?`)) {
+        if(confirm(`Are you sure you want to delete the event type: "${name}"?`)) {
             deleteDoc(doc(db, "event_types", id));
         }
     };
@@ -219,6 +239,8 @@
 
     window.processLog = async (logId, approved) => {
       try {
+        if(!confirm(`Are you sure you want to ${approved ? 'APPROVE' : 'DENY'} this log?`)) return;
+
         const logRef = doc(db, "event_pending", logId);
         const logSnap = await getDoc(logRef);
         if(!logSnap.exists()) return;
@@ -226,13 +248,9 @@
 
         if (approved) {
           const batch = writeBatch(db);
-          
-          // List all people who get +1 (Host, Co-Hosts, Supervisors)
           let participants = [data.hostEmail];
           if (data.coHosts) participants = participants.concat(data.coHosts);
           if (data.supervisors) participants = participants.concat(data.supervisors);
-          
-          // Filter out "None" and duplicates
           participants = [...new Set(participants.filter(e => e && e !== "None"))];
 
           for (const email of participants) {
@@ -263,7 +281,7 @@
       const rid = document.getElementById("inviteRobloxId").value;
       if(!email) return alert("Email required");
       await setDoc(doc(db, "pending_invites", email), { robloxUserId: rid, invitedAt: new Date(), invitedBy: auth.currentUser.email });
-      alert("Authorized");
+      alert("User Authorized.");
     };
   </script>
 </body>

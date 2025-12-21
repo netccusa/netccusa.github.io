@@ -43,6 +43,7 @@
       max-width: 650px; 
       box-shadow: 0 20px 50px rgba(0,0,0,0.6); 
       animation: fadeIn 1.2s ease-out forwards;
+      margin-bottom: 60px; /* Space for version footer */
     }
 
     h1 { text-transform: uppercase; letter-spacing: 2px; color: #e2b13c; margin-top: 0; text-shadow: 0 2px 4px rgba(0,0,0,0.5); }
@@ -58,13 +59,11 @@
     .stat-purple { border-color: #9f7aea; background: rgba(159, 122, 234, 0.1); }
     .stat-purple small, .stat-purple div { color: #9f7aea; }
 
-    /* Global Weekly Stats Style */
     .global-stats { background: rgba(255, 255, 255, 0.03); border: 1px dashed rgba(226, 177, 60, 0.3); border-radius: 6px; padding: 15px; margin: 20px 0; display: flex; justify-content: space-around; }
     .global-item { flex: 1; }
     .global-item span { display: block; font-size: 24px; font-weight: bold; color: #e2b13c; }
     .global-item label { font-size: 10px; color: #718096; text-transform: uppercase; }
 
-    /* Notifications Style */
     #notifArea { margin-bottom: 20px; }
     .notif-banner { padding: 10px; border-radius: 4px; margin-bottom: 10px; font-size: 13px; font-weight: bold; animation: fadeIn 0.5s ease-out; cursor: pointer; display: flex; justify-content: space-between; align-items: center; }
     .notif-success { background: rgba(40, 167, 69, 0.2); border: 1px solid #28a745; color: #28a745; }
@@ -78,6 +77,18 @@
     .danger-zone { margin-top: 40px; padding-top: 20px; border-top: 1px solid rgba(255, 77, 77, 0.2); }
     .delete-acc-btn { font-size: 11px; color: rgba(255, 77, 77, 0.6); cursor: pointer; background: none; border: none; text-decoration: underline; }
     .delete-acc-btn:hover { color: #ff4d4d; }
+
+    /* Added Version Footer Styles */
+    .version-footer {
+      position: fixed;
+      bottom: 15px;
+      font-size: 11px;
+      color: rgba(203, 213, 224, 0.5);
+      letter-spacing: 1px;
+      opacity: 0;
+      animation: fadeIn 1.2s ease-out 0.6s forwards;
+      pointer-events: none;
+    }
   </style>
 </head>
 <body>
@@ -133,11 +144,19 @@
     </div>
   </div>
 
+  <div class="version-footer" id="appVersion"></div>
+
   <script type="module">
     import { initializeApp } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-app.js";
     import { getAuth, onAuthStateChanged, signOut, deleteUser } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-auth.js";
     import { getFirestore, doc, getDoc, collection, query, orderBy, limit, getDocs, deleteDoc, onSnapshot } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-firestore.js";
     import firebaseConfig from './config.js';
+
+    // Set Version in Footer
+    const versionEl = document.getElementById('appVersion');
+    if (versionEl) {
+      versionEl.textContent = `v${firebaseConfig.version || '1.0.0'} | Restricted Access`;
+    }
 
     const app = initializeApp(firebaseConfig);
     const auth = getAuth(app);
@@ -147,7 +166,6 @@
         if (!user) return window.location.replace("index.html");
         document.getElementById("welcome").textContent = `Logged in as: ${user.email}`;
 
-        // Live stats listener for current user
         onSnapshot(doc(db, "users", user.uid), (docSnap) => {
             if (docSnap.exists()) {
                 const data = docSnap.data();
@@ -171,7 +189,6 @@
         listenForNotifications(user.email);
     });
 
-    // Calculates collective weekly totals across all users
     async function calculateGlobalStats() {
         onSnapshot(collection(db, "users"), (snap) => {
             let totalWkEvents = 0;
@@ -186,11 +203,9 @@
         });
     }
 
-    // Notification System: Checks "event_history" for newly approved/denied items belonging to the user
     function listenForNotifications(userEmail) {
         const notifArea = document.getElementById("notifArea");
         const historyRef = collection(db, "event_history");
-        // We look for logs approved/processed in the last 24 hours to keep the UI clean
         const q = query(historyRef, orderBy("approvedAt", "desc"), limit(3));
         
         onSnapshot(q, (snap) => {
@@ -205,7 +220,6 @@
                             <span onclick="this.parentElement.remove()" style="margin-left:15px; opacity:0.6;">✕</span>
                         `;
                         notifArea.prepend(banner);
-                        // Auto-hide after 10 seconds
                         setTimeout(() => banner.remove(), 10000);
                     }
                 }

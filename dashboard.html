@@ -149,61 +149,70 @@
     import { getFirestore, doc, getDoc } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-firestore.js";
 
     import firebaseConfig from './config.js';
-    document.getElementById('appVersion').textContent = `v${firebaseConfig.version || '1.0.0'} | Authorized Personnel Only`;
 
+    // Initialize Firebase
     const app = initializeApp(firebaseConfig);
     const auth = getAuth(app);
     const db = getFirestore(app);
 
+    // Update Version Footer
+    const versionEl = document.getElementById('appVersion');
+    if (versionEl) {
+      versionEl.textContent = `v${firebaseConfig.version || '1.0.0'} | Authorized Personnel Only`;
+    }
+
     let isLoggingOut = false;
 
+    // Listen for Auth State
     onAuthStateChanged(auth, async (user) => {
-      // If no user and we aren't already in the middle of a logout redirect
-      if (!user && !isLoggingOut) { 
-        window.location.replace("index.html"); 
+      // If no user is logged in, redirect to login page
+      if (!user) {
+        if (!isLoggingOut) { 
+          window.location.replace("index.html"); 
+        }
         return; 
       }
 
-      if (user) {
-        document.getElementById("welcome").textContent = `Logged in as: ${user.email}`;
+      // If user is logged in
+      document.getElementById("welcome").textContent = `Logged in as: ${user.email}`;
 
-        try {
-          const userRef = doc(db, "users", user.uid);
-          const userSnap = await getDoc(userRef);
+      try {
+        const userRef = doc(db, "users", user.uid);
+        const userSnap = await getDoc(userRef);
 
-          if (userSnap.exists()) {
-            const userData = userSnap.data();
-            const userRole = userData.role || "No Role Assigned";
-            document.getElementById("roleDisplay").textContent = userRole;
+        if (userSnap.exists()) {
+          const userData = userSnap.data();
+          const userRole = userData.role || "User";
+          document.getElementById("roleDisplay").textContent = userRole;
 
-            if (userRole.toLowerCase() === "admin") {
-              document.getElementById("adminLink").style.display = "block";
-            }
-          } else {
-            document.getElementById("roleDisplay").textContent = "Profile Not Found";
+          // Show Admin Panel link only if user is an admin
+          if (userRole.toLowerCase() === "admin") {
+            const adminLink = document.getElementById("adminLink");
+            if (adminLink) adminLink.style.display = "block";
           }
-        } catch (error) {
-          console.error("Error fetching user data:", error);
-          document.getElementById("roleDisplay").textContent = "Error Loading Role";
+        } else {
+          document.getElementById("roleDisplay").textContent = "Standard Access";
         }
+      } catch (error) {
+        console.error("Error fetching user data:", error);
+        document.getElementById("roleDisplay").textContent = "Service Error";
       }
     });
 
+    // Logout Functionality
     document.getElementById("logoutBtn").addEventListener("click", async () => {
       try {
-        isLoggingOut = true; // Set flag to stop the observer from looping
+        isLoggingOut = true; 
         document.getElementById("logoutBtn").textContent = "Logging out...";
         await signOut(auth);
-        // Use replace instead of href to clear history stack
         window.location.replace("index.html");
       } catch (error) {
         console.error("Logout failed", error);
         isLoggingOut = false;
         document.getElementById("logoutBtn").textContent = "Log Out of Portal";
+        alert("Logout failed. Please try again.");
       }
     });
   </script>
-</body>
-</html>
 </body>
 </html>

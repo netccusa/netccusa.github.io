@@ -10,16 +10,17 @@
     .btn-small { padding: 8px 16px; background-color: rgba(255, 255, 255, 0.1); color: white; border: 1px solid #e2b13c; border-radius: 4px; cursor: pointer; text-decoration: none; font-size: 13px; text-transform: uppercase; transition: 0.3s; }
     .btn-small:hover { background-color: #e2b13c; color: #001226; }
     .center-logo { display: block; margin: 20px auto; width: 120px; height: auto; border-radius: 50%; }
-    .dashboard-container { background: rgba(255, 255, 255, 0.05); padding: 40px; border-radius: 8px; border-top: 3px solid #e2b13c; width: 100%; max-width: 550px; box-shadow: 0 10px 30px rgba(0,0,0,0.5); }
+    .dashboard-container { background: rgba(255, 255, 255, 0.05); padding: 40px; border-radius: 8px; border-top: 3px solid #e2b13c; width: 100%; max-width: 650px; box-shadow: 0 10px 30px rgba(0,0,0,0.5); }
     h1 { text-transform: uppercase; letter-spacing: 2px; color: #e2b13c; margin-top: 0; }
     #roleDisplay { color: #e2b13c; font-weight: bold; margin: 10px 0; font-size: 22px; text-transform: uppercase; letter-spacing: 1px; }
-    .stats-row { display: flex; gap: 10px; justify-content: center; margin-bottom: 20px; flex-wrap: wrap; }
-    .stat-box { background: rgba(226, 177, 60, 0.1); padding: 10px; border-radius: 5px; border: 1px solid #e2b13c; min-width: 120px; }
-    .stat-box small { font-size: 10px; color: #e2b13c; }
-    .stat-box div { font-size: 20px; font-weight: bold; }
+    .stats-row { display: grid; grid-template-columns: 1fr 1fr 1fr; gap: 10px; margin-bottom: 20px; }
+    .stat-box { background: rgba(226, 177, 60, 0.1); padding: 10px; border-radius: 5px; border: 1px solid #e2b13c; }
+    .stat-box small { font-size: 9px; color: #e2b13c; }
+    .stat-box div { font-size: 18px; font-weight: bold; }
+    .stat-purple { border-color: #9f7aea; background: rgba(159, 122, 234, 0.1); }
+    .stat-purple small, .stat-purple div { color: #9f7aea; }
     #logoutBtn { margin-top: 20px; padding: 12px 30px; background: transparent; color: #ff4d4d; border: 1px solid #ff4d4d; border-radius: 4px; cursor: pointer; font-weight: bold; transition: 0.3s; }
     #logoutBtn:hover { background: #ff4d4d; color: white; }
-    .version-footer { position: fixed; bottom: 15px; font-size: 11px; color: #4a5568; letter-spacing: 1px; }
     .btn-group { display: flex; gap: 10px; flex-direction: column; margin-bottom: 20px; }
   </style>
 </head>
@@ -39,27 +40,18 @@
     <div id="roleDisplay">Loading...</div>
 
     <div class="stats-row">
-      <div class="stat-box">
-        <small>WEEKLY EVENTS</small>
-        <div id="weeklyCount">0</div>
-      </div>
-      <div class="stat-box">
-        <small>PROMO EVENTS</small>
-        <div id="promoCount">0</div>
-      </div>
-      <div class="stat-box">
-        <small>CAREER EVENTS</small>
-        <div id="careerCount">0</div>
-      </div>
-      <div class="stat-box" style="border-color: #6b46c1; background: rgba(107, 70, 193, 0.1);">
-        <small style="color:#9f7aea">CAREER MINUTES</small>
-        <div id="minutesCount" style="color: #9f7aea;">0</div>
-      </div>
+      <div class="stat-box"><small>WEEKLY EVENTS</small><div id="weeklyCount">0</div></div>
+      <div class="stat-box"><small>PROMO EVENTS</small><div id="promoCount">0</div></div>
+      <div class="stat-box"><small>CAREER EVENTS</small><div id="careerCount">0</div></div>
+      
+      <div class="stat-box stat-purple"><small>WEEKLY MINS</small><div id="wMins">0</div></div>
+      <div class="stat-box stat-purple"><small>PROMO MINS</small><div id="pMins">0</div></div>
+      <div class="stat-box stat-purple"><small>CAREER MINS</small><div id="cMins">0</div></div>
     </div>
 
     <div class="btn-group">
         <a href="eventlogs.html" class="btn-small">Submit Event Log</a>
-        <a href="minuteslogs.html" class="btn-small" style="border-color: #9f7aea; color: #9f7aea;">Submit Minutes Log</a>
+        <a href="minuteslog.html" class="btn-small" style="border-color: #9f7aea; color: #9f7aea;">Submit Minutes Log</a>
     </div>
 
     <div style="text-align: left; margin-top: 20px;">
@@ -71,8 +63,6 @@
 
     <button id="logoutBtn">Log Out of Portal</button>
   </div>
-
-  <div class="version-footer" id="appVersion"></div>
 
   <script type="module">
     import { initializeApp } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-app.js";
@@ -91,11 +81,13 @@
         const userSnap = await getDoc(doc(db, "users", user.uid));
         if (userSnap.exists()) {
             const data = userSnap.data();
-            document.getElementById("careerCount").textContent = data.totalEvents || 0;
-            document.getElementById("promoCount").textContent = data.promoEvents || 0;
             document.getElementById("weeklyCount").textContent = data.weeklyEvents || 0;
-            // UPDATE MINUTES
-            document.getElementById("minutesCount").textContent = data.totalMinutes || 0;
+            document.getElementById("promoCount").textContent = data.promoEvents || 0;
+            document.getElementById("careerCount").textContent = data.totalEvents || 0;
+            
+            document.getElementById("wMins").textContent = data.weeklyMinutes || 0;
+            document.getElementById("pMins").textContent = data.promoMinutes || 0;
+            document.getElementById("cMins").textContent = data.totalMinutes || 0;
             
             document.getElementById("roleDisplay").textContent = data.role || "User";
 
@@ -116,8 +108,10 @@
         snap.forEach(doc => {
             const log = doc.data();
             const host = log.hostEmail?.split('@')[0] || "Unknown";
+            const prefix = log.logCategory === "minutes" ? "Minutes: " : "Event: ";
+            
             container.innerHTML += `<div style="padding:5px 0; border-bottom:1px solid rgba(255,255,255,0.1);">
-                <strong>${log.type}</strong><br><small>HOST: ${host.toUpperCase()}</small>
+                <strong>${prefix}${log.type}</strong><br><small>HOST: ${host.toUpperCase()}</small>
             </div>`;
         });
     }

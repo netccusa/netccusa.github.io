@@ -98,12 +98,14 @@
       loadPendingMinutes();
     });
 
-    // Reset All Weekly Events
+    // Reset All Weekly Events and Minutes
     document.getElementById("resetAllWeeklyBtn").onclick = async () => {
-        if (!confirm("CONFIRMATION: Are you sure you want to reset WEEKLY events for EVERYONE?")) return;
+        if (!confirm("CONFIRMATION: Reset WEEKLY events AND minutes for EVERYONE?")) return;
         const usersSnap = await getDocs(collection(db, "users"));
         const batch = writeBatch(db);
-        usersSnap.forEach(uDoc => { batch.update(uDoc.ref, { weeklyEvents: 0 }); });
+        usersSnap.forEach(uDoc => { 
+            batch.update(uDoc.ref, { weeklyEvents: 0, weeklyMinutes: 0 }); 
+        });
         await batch.commit();
         alert("All weekly counters reset.");
     };
@@ -131,13 +133,16 @@
           div.innerHTML = `
             <strong>${u.email}</strong><br>
             ${roleHTML}<br>
-            <div style="margin-top:5px; color:#cbd5e0;">
-                Career: ${u.totalEvents || 0} | Weekly: ${u.weeklyEvents || 0} | Minutes: ${u.totalMinutes || 0}
+            <div style="margin-top:5px; color:#cbd5e0; line-height: 1.4;">
+                Events: W: ${u.weeklyEvents || 0} | P: ${u.promoEvents || 0} | C: ${u.totalEvents || 0}<br>
+                Minutes: W: ${u.weeklyMinutes || 0} | P: ${u.promoMinutes || 0} | C: ${u.totalMinutes || 0}
             </div>
             ${canManage ? `
-                <button class="reset-btn" onclick="window.resetStat('${uDoc.id}', 'weeklyEvents', '${u.email}')">Reset Weekly</button>
-                <button class="reset-btn" onclick="window.resetStat('${uDoc.id}', 'promoEvents', '${u.email}')">Reset Promo</button>
-                <button class="reset-btn" style="background:#9f7aea" onclick="window.resetStat('${uDoc.id}', 'totalMinutes', '${u.email}')">Reset Minutes</button>
+                <div style="margin-top:8px;">
+                    <button class="reset-btn" onclick="window.resetIndividual('${uDoc.id}', 'weekly', '${u.email}')">Reset Weekly</button>
+                    <button class="reset-btn" onclick="window.resetIndividual('${uDoc.id}', 'promo', '${u.email}')">Reset Promo</button>
+                    <button class="reset-btn" onclick="window.resetIndividual('${uDoc.id}', 'career', '${u.email}')">Reset Career</button>
+                </div>
             ` : ''}
           `;
           list.appendChild(div);
@@ -149,8 +154,13 @@
         if (confirm(`Change ${email}'s role to ${newRole}?`)) await updateDoc(doc(db, "users", uid), { role: newRole });
     };
 
-    window.resetStat = async (uid, field, email) => {
-        if (confirm(`Reset ${field} for ${email}?`)) await updateDoc(doc(db, "users", uid), { [field]: 0 });
+    window.resetIndividual = async (uid, type, email) => {
+        if (!confirm(`Reset ALL ${type} stats (Events & Minutes) for ${email}?`)) return;
+        const updates = {};
+        if (type === 'weekly') { updates.weeklyEvents = 0; updates.weeklyMinutes = 0; }
+        if (type === 'promo') { updates.promoEvents = 0; updates.promoMinutes = 0; }
+        if (type === 'career') { updates.totalEvents = 0; updates.totalMinutes = 0; }
+        await updateDoc(doc(db, "users", uid), updates);
     };
 
     // Event Types Logic
@@ -197,7 +207,7 @@
       });
     }
 
-    // NEW Approval Logic (Minutes)
+    // Approval Logic (Minutes)
     function loadPendingMinutes() {
       onSnapshot(collection(db, "minutes_pending"), (snap) => {
         const queue = document.getElementById("minutesQueue");
@@ -245,7 +255,11 @@
             const q = query(collection(db, "users"), where("email", "==", email));
             const uSnap = await getDocs(q);
             if (!uSnap.empty) {
-                batch.update(uSnap.docs[0].ref, { totalEvents: increment(1), promoEvents: increment(1), weeklyEvents: increment(1) });
+                batch.update(uSnap.docs[0].ref, { 
+                    totalEvents: increment(1), 
+                    promoEvents: increment(1), 
+                    weeklyEvents: increment(1) 
+                });
             }
           }
           batch.set(doc(collection(db, "event_history")), { ...data, approvedAt: new Date(), approvedBy: auth.currentUser.email });
@@ -256,7 +270,6 @@
       } catch (e) { alert("Error: " + e.message); }
     };
 
-    // NEW Process Minutes Logic
     window.processMinutes = async (logId, approved) => {
       try {
         if(!confirm(`Confirm ${approved ? 'Approval' : 'Denial'} for Minutes?`)) return;
@@ -267,16 +280,17 @@
 
         if (approved) {
           const batch = writeBatch(db);
-          let participants = [data.hostEmail, ...(data.coWorkers || [])];
-          participants = [...new Set(participants.filter(e => e && e !== "None"))];
-
-          for (const email of participants) {
-            const q = query(collection(db, "users"), where("email", "==", email));
-            const uSnap = await getDocs(q);
-            if (!uSnap.empty) {
-                batch.update(uSnap.docs[0].ref, { totalMinutes: increment(data.minutes) });
-            }
+          const q = query(collection(db, "users"), where("email", "==", data.hostEmail));
+          const uSnap = await getDocs(q);
+          
+          if (!uSnap.empty) {
+              batch.update(uSnap.docs[0].ref, { 
+                  totalMinutes: increment(data.minutes),
+                  promoMinutes: increment(data.minutes),
+                  weeklyMinutes: increment(data.minutes)
+              });
           }
+          
           batch.set(doc(collection(db, "event_history")), { ...data, approvedAt: new Date(), approvedBy: auth.currentUser.email });
           batch.delete(logRef);
           await batch.commit();

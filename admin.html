@@ -8,7 +8,6 @@
     body { 
       font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif; 
       padding: 20px; 
-      text-align: center; 
       background-color: #001226; 
       color: white; 
       min-height: 100vh; 
@@ -18,67 +17,47 @@
       align-items: center;
     }
 
-    .nav-links { 
-      width: 100%;
-      display: flex; 
-      justify-content: flex-start;
-      margin-bottom: 20px;
-    }
-
-    .btn-small { 
-      padding: 8px 16px; 
-      background-color: rgba(255, 255, 255, 0.1); 
-      color: white; 
-      border: 1px solid #e2b13c; 
-      border-radius: 4px; 
-      cursor: pointer; 
-      text-decoration: none; 
-      font-size: 13px; 
-      text-transform: uppercase;
-      transition: 0.3s;
-    }
-
+    .nav-links { width: 100%; max-width: 900px; display: flex; justify-content: flex-start; margin-bottom: 20px; }
+    .btn-small { padding: 8px 16px; background-color: rgba(255, 255, 255, 0.1); color: white; border: 1px solid #e2b13c; border-radius: 4px; cursor: pointer; text-decoration: none; font-size: 13px; text-transform: uppercase; transition: 0.3s; }
     .btn-small:hover { background-color: #e2b13c; color: #001226; }
+
+    .admin-grid { display: grid; grid-template-columns: 1fr 2fr; gap: 20px; width: 100%; max-width: 1000px; }
 
     .admin-container {
       background: rgba(255, 255, 255, 0.05);
-      padding: 40px;
+      padding: 30px;
       border-radius: 8px;
       border-top: 3px solid #e2b13c;
-      width: 100%;
-      max-width: 450px;
       box-shadow: 0 10px 30px rgba(0,0,0,0.5);
+      height: fit-content;
     }
 
-    h1 { text-transform: uppercase; letter-spacing: 2px; color: #e2b13c; margin-bottom: 30px; }
-    
+    h1, h2 { text-transform: uppercase; letter-spacing: 2px; color: #e2b13c; margin-top: 0; }
     .input-group { margin-bottom: 15px; text-align: left; }
-    label { display: block; font-size: 11px; color: #718096; text-transform: uppercase; margin-bottom: 5px; margin-left: 2px; }
+    label { display: block; font-size: 11px; color: #718096; text-transform: uppercase; margin-bottom: 5px; }
     
-    input {
-      width: 100%;
-      padding: 12px;
-      background: #001e3c;
-      border: 1px solid #334e68;
-      border-radius: 4px;
-      color: white;
-      box-sizing: border-box;
+    input, select {
+      width: 100%; padding: 12px; background: #001e3c; border: 1px solid #334e68; border-radius: 4px; color: white; box-sizing: border-box;
     }
 
-    .action-btn {
-      width: 100%;
-      padding: 14px;
-      background-color: #e2b13c;
-      color: #001226;
-      border: none;
-      border-radius: 4px;
-      cursor: pointer;
-      font-weight: bold;
-      text-transform: uppercase;
-      margin-top: 10px;
-    }
-
+    .action-btn { width: 100%; padding: 12px; background-color: #e2b13c; color: #001226; border: none; border-radius: 4px; cursor: pointer; font-weight: bold; text-transform: uppercase; margin-top: 10px; }
     .action-btn:hover { background-color: #ffcc4d; }
+
+    /* User List Styling */
+    .user-list-container { max-height: 500px; overflow-y: auto; text-align: left; }
+    .user-card {
+      background: rgba(0, 0, 0, 0.3);
+      padding: 15px;
+      border-radius: 5px;
+      margin-bottom: 10px;
+      border-left: 3px solid #334e68;
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+    }
+    .user-info p { margin: 0; font-size: 14px; }
+    .user-info small { color: #718096; font-size: 11px; }
+    .rank-select { width: auto; padding: 5px; font-size: 12px; }
 
     .version-footer { position: fixed; bottom: 15px; font-size: 11px; color: #4a5568; letter-spacing: 1px; }
   </style>
@@ -89,21 +68,26 @@
     <a href="dashboard.html" class="btn-small">← Return to Dashboard</a>
   </div>
 
-  <div class="admin-container">
-    <h1>Command Admin</h1>
-    <p style="font-size: 13px; color: #cbd5e0; margin-bottom: 25px;">Authorize new personnel for portal access.</p>
-
-    <div class="input-group">
-      <label>Personnel Email</label>
-      <input type="email" id="inviteEmail" placeholder="email@example.com">
+  <div class="admin-grid">
+    <div class="admin-container">
+      <h2>Authorize Access</h2>
+      <div class="input-group">
+        <label>Personnel Email</label>
+        <input type="email" id="inviteEmail" placeholder="email@example.com">
+      </div>
+      <div class="input-group">
+        <label>Roblox UserID</label>
+        <input type="number" id="inviteRobloxId" placeholder="123456789">
+      </div>
+      <button class="action-btn" id="sendInviteBtn">Create Authorization</button>
     </div>
 
-    <div class="input-group">
-      <label>Roblox UserID</label>
-      <input type="number" id="inviteRobloxId" placeholder="123456789">
+    <div class="admin-container">
+      <h2>Personnel Management</h2>
+      <div class="user-list-container" id="userList">
+        <p style="color: #718096;">Loading personnel database...</p>
+      </div>
     </div>
-
-    <button class="action-btn" id="sendInviteBtn">Authorize Access</button>
   </div>
 
   <div class="version-footer" id="appVersion"></div>
@@ -111,33 +95,84 @@
   <script type="module">
     import { initializeApp } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-app.js";
     import { getAuth, onAuthStateChanged } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-auth.js";
-    import { getFirestore, doc, getDoc, setDoc } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-firestore.js";
+    import { getFirestore, doc, getDoc, setDoc, collection, getDocs, updateDoc } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-firestore.js";
     import firebaseConfig from './config.js';
 
     const app = initializeApp(firebaseConfig);
     const auth = getAuth(app);
     const db = getFirestore(app);
 
-    // Security Check: Ensure only Admins can stay on this page
+    // Hierarchy Definition (Lower index = lower power)
+    const hierarchy = ["user", "hicom", "director", "headquarters", "secnav", "admin"];
+    let myRole = "user";
+
     onAuthStateChanged(auth, async (user) => {
       if (!user) return window.location.replace("index.html");
       
       const userRef = doc(db, "users", user.uid);
       const userSnap = await getDoc(userRef);
-      const userData = userSnap.data();
-      const portalRole = (userData?.role || "User").toLowerCase();
+      myRole = (userSnap.data()?.role || "user").toLowerCase();
 
-      if (!["admin", "director", "hicom"].includes(portalRole)) {
-        alert("Unauthorized Access Attempt Detected.");
+      if (!hierarchy.slice(1).includes(myRole)) { // Must be at least HICOM to see Admin panel
+        alert("Unauthorized Access.");
         window.location.replace("dashboard.html");
+      } else {
+        fetchUsers();
       }
     });
 
+    async function fetchUsers() {
+      const querySnapshot = await getDocs(collection(db, "users"));
+      const listEl = document.getElementById("userList");
+      listEl.innerHTML = "";
+
+      querySnapshot.forEach((userDoc) => {
+        const data = userDoc.data();
+        const userId = userDoc.id;
+        const currentRole = (data.role || "user").toLowerCase();
+
+        const card = document.createElement("div");
+        card.className = "user-card";
+        
+        // Disable dropdown if target is higher or same rank as current user
+        const isHigherOrSame = hierarchy.indexOf(currentRole) >= hierarchy.indexOf(myRole);
+        const disabledAttr = isHigherOrSame ? "disabled" : "";
+
+        card.innerHTML = `
+          <div class="user-info">
+            <p>${data.email}</p>
+            <small>Roblox ID: ${data.userid || 'N/A'}</small>
+          </div>
+          <select class="rank-select" onchange="window.updateUserRank('${userId}', this.value)" ${disabledAttr}>
+            ${hierarchy.map(r => `<option value="${r}" ${r === currentRole ? 'selected' : ''}>${r.toUpperCase()}</option>`).join('')}
+          </select>
+        `;
+        listEl.appendChild(card);
+      });
+    }
+
+    // Update Function
+    window.updateUserRank = async (targetUid, newRank) => {
+      // Security Check: Cannot promote someone to your own rank or higher
+      if (hierarchy.indexOf(newRank) >= hierarchy.indexOf(myRole)) {
+        alert("Security Violation: You cannot promote personnel to a rank equal to or higher than your own.");
+        fetchUsers(); // Refresh to reset dropdown
+        return;
+      }
+
+      try {
+        await updateDoc(doc(db, "users", targetUid), { role: newRank });
+        alert("Access Level Updated.");
+      } catch (err) {
+        alert("Error: " + err.message);
+      }
+    };
+
+    // Invite Logic
     document.getElementById("sendInviteBtn").addEventListener("click", async () => {
       const email = document.getElementById("inviteEmail").value.toLowerCase().trim();
       const robloxId = document.getElementById("inviteRobloxId").value.trim();
-
-      if (!email || !robloxId) return alert("Please provide both email and Roblox ID.");
+      if (!email || !robloxId) return alert("Please fill all fields.");
 
       try {
         await setDoc(doc(db, "pending_invites", email), {
@@ -145,15 +180,11 @@
           invitedAt: new Date(),
           invitedBy: auth.currentUser.email
         });
-        alert(`Access authorized for: ${email}`);
-        document.getElementById("inviteEmail").value = "";
-        document.getElementById("inviteRobloxId").value = "";
-      } catch (err) {
-        alert("Error authorizing access: " + err.message);
-      }
+        alert(`Authorization created for ${email}`);
+      } catch (err) { alert(err.message); }
     });
 
-    document.getElementById('appVersion').textContent = `v${firebaseConfig.version || '1.0.0'} | NETC Security Command`;
+    document.getElementById('appVersion').textContent = `v${firebaseConfig.version || '1.0.0'} | NETC HQ`;
   </script>
 </body>
 </html>

@@ -9,9 +9,9 @@ import {
 } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-auth.js";
 
 const firebaseConfig = {
-  apiKey: "AIzaSyBOND-wraRXGL0jB8xK2zHnDMBXBhA5WRk",
-  authDomain: "otp-client-login.firebaseapp.com",
-  projectId: "otp-client-login",
+  apiKey: "AIzaSyBg3KRIIvzkTA8OnrEBsln-aPcjU9DrBA4",
+  authDomain: "netccusa.firebaseapp.com",
+  projectId: "netccusa",
 };
 
 const app = initializeApp(firebaseConfig);

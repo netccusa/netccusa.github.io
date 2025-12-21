@@ -8,7 +8,7 @@
     body {
       font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
       padding: 20px;
-      background-color: #001226; /* Deep Navy Blue */
+      background-color: #001226;
       text-align: center;
       color: white;
       min-height: 100vh;
@@ -26,7 +26,7 @@
       width: 150px; 
       max-width: 80%;
       height: auto;
-      border-radius: 50%; /* Added in case the new logo is a profile-style circular image */
+      border-radius: 50%;
     }
 
     h2 {
@@ -34,7 +34,7 @@
       letter-spacing: 2px;
       margin-bottom: 30px;
       font-weight: 300;
-      color: #e2b13c; /* Navy Gold */
+      color: #e2b13c;
     }
 
     .login-container {
@@ -59,10 +59,6 @@
       box-sizing: border-box;
     }
 
-    input::placeholder {
-      color: #718096;
-    }
-
     button {
       margin-top: 15px;
       padding: 12px;
@@ -74,11 +70,6 @@
       cursor: pointer;
       font-weight: bold;
       text-transform: uppercase;
-      transition: background 0.3s ease;
-    }
-
-    button:hover {
-      background-color: #c99a2e;
     }
 
     .signup-redirect {
@@ -93,10 +84,6 @@
       font-weight: bold;
     }
 
-    .signup-redirect a:hover {
-      text-decoration: underline;
-    }
-
     .version-footer {
       position: fixed;
       bottom: 15px;
@@ -108,16 +95,12 @@
 </head>
 <body>
 
-  <img src="https://lh3.googleusercontent.com/sitesv/AAzXCkeSksntaTMqW1oo1uFgl3Fmc2yKa4FUk_5MsgZ9L_DOopmfHoxoJwHn7Ub-qO--ydPYr1T3yoRKmN7znGt-y84zKXA2hr7irUxcFMxzHxKFWwRL2HoafEXa6LjQ1y8VIvpSd6ePg4-6Bd1ZTe3zTRK7-_6kzbIBbN--hzBd4zVbDh-ZnVbBdO08KEs=w16383" 
-       alt="NETC Command Seal" 
-       class="center-logo">
+  <img src="https://lh3.googleusercontent.com/sitesv/AAzXCkeSksntaTMqW1oo1uFgl3Fmc2yKa4FUk_5MsgZ9L_DOopmfHoxoJwHn7Ub-qO--ydPYr1T3yoRKmN7znGt-y84zKXA2hr7irUxcFMxzHxKFWwRL2HoafEXa6LjQ1y8VIvpSd6ePg4-6Bd1ZTe3zTRK7-_6kzbIBbN--hzBd4zVbDh-ZnVbBdO08KEs=w16383" alt="NETC Command Seal" class="center-logo">
 
   <div class="login-container">
     <h2>NETC Portal</h2>
-
     <input id="email" type="email" placeholder="Email">
     <input id="password" type="password" placeholder="Password">
-
     <button id="loginBtn">Secure Login</button>
 
     <p class="signup-redirect">
@@ -129,9 +112,7 @@
 
   <script type="module">
     import firebaseConfig from './config.js';
-    // Safety check for version string
-    const version = firebaseConfig.version || '1.0.0';
-    document.getElementById('appVersion').textContent = `v${version} | Restricted Access`;
+    document.getElementById('appVersion').textContent = `v${firebaseConfig.version || '1.0.0'} | Restricted Access`;
   </script>
   
   <script type="module" src="auth.js"></script>

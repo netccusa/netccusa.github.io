@@ -1,0 +1,145 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Login | Naval Education and Training Command</title>
+  <link rel="manifest" href="manifest.json">
+  <meta name="theme-color" content="#002147">
+  <link rel="stylesheet" href="style.css">
+  <style>
+    body {
+      font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+      padding: 20px;
+      background-color: #001226; /* Deep Navy Blue */
+      text-align: center;
+      color: white;
+      min-height: 100vh;
+      margin: 0;
+      box-sizing: border-box;
+      display: flex;
+      flex-direction: column;
+      justify-content: center;
+      align-items: center;
+    }
+
+    .center-logo {
+      display: block;
+      margin-bottom: 20px;
+      width: 150px; /* Adjusted for a standard crest size */
+      max-width: 80%;
+      height: auto;
+    }
+
+    h2 {
+      text-transform: uppercase;
+      letter-spacing: 2px;
+      margin-bottom: 30px;
+      font-weight: 300;
+      color: #e2b13c; /* Navy Gold */
+    }
+
+    .login-container {
+      background: rgba(255, 255, 255, 0.05);
+      padding: 40px;
+      border-radius: 8px;
+      border-top: 3px solid #e2b13c;
+      width: 100%;
+      max-width: 350px;
+    }
+
+    input {
+      display: block;
+      margin: 15px auto;
+      padding: 12px;
+      width: 100%;
+      border-radius: 4px;
+      border: 1px solid #334e68;
+      background-color: #001e3c;
+      color: white;
+      box-sizing: border-box;
+    }
+
+    input::placeholder {
+      color: #718096;
+    }
+
+    button {
+      margin-top: 15px;
+      padding: 12px;
+      width: 100%;
+      background-color: #e2b13c;
+      color: #001226;
+      border: none;
+      border-radius: 4px;
+      cursor: pointer;
+      font-weight: bold;
+      text-transform: uppercase;
+      transition: background 0.3s ease;
+    }
+
+    button:hover {
+      background-color: #c99a2e;
+    }
+
+    .signup-redirect {
+      margin-top: 25px;
+      font-size: 13px;
+      color: #cbd5e0;
+    }
+
+    .signup-redirect a {
+      color: #e2b13c;
+      text-decoration: none;
+      font-weight: bold;
+    }
+
+    .signup-redirect a:hover {
+      text-decoration: underline;
+    }
+
+    .version-footer {
+      position: fixed;
+      bottom: 15px;
+      font-size: 11px;
+      color: #4a5568;
+      letter-spacing: 1px;
+    }
+  </style>
+</head>
+<body>
+
+  <img src="https://upload.wikimedia.org/wikipedia/commons/thumb/0/09/Seal_of_the_United_States_Naval_Education_and_Training_Command.svg/1200px-Seal_of_the_United_States_Naval_Education_and_Training_Command.svg.png" 
+       alt="NETC Logo" 
+       class="center-logo">
+
+  <div class="login-container">
+    <h2>NETC Portal</h2>
+
+    <input id="email" type="email" placeholder="CAC Email or Username">
+    <input id="password" type="password" placeholder="Password">
+
+    <button id="loginBtn">Secure Login</button>
+
+    <p class="signup-redirect">
+      Authorized personnel without access: <a href="signup.html">Register here</a>
+    </p>
+  </div>
+
+  <div class="version-footer" id="appVersion"></div>
+
+  <script type="module">
+    import firebaseConfig from './config.js';
+    document.getElementById('appVersion').textContent = `v${firebaseConfig.version || '1.0.0'} | Restricted Access`;
+  </script>
+  
+  <script type="module" src="auth.js"></script>
+
+  <script>
+    if ('serviceWorker' in navigator) {
+      navigator.serviceWorker.register('./sw.js');
+    }
+  </script>
+
+</body>
+</html>

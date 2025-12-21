@@ -1,0 +1,115 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Dashboard</title>
+  <style>
+    body { font-family: sans-serif; padding: 20px; text-align: center; background-color: #121212; color: white; min-height: 100vh; position: relative; margin: 0; box-sizing: border-box; }
+    .nav-links { position: absolute; top: 20px; right: 20px; display: flex; gap: 10px; }
+    .btn-small { padding: 8px 12px; background-color: #333; color: white; border: 1px solid #555; border-radius: 5px; cursor: pointer; text-decoration: none; font-size: 13px; }
+    .center-logo { display: block; margin: 40px auto; width: 300px; max-width: 90%; height: auto; }
+    .doc-container { max-width: 500px; margin: 40px auto; background: #1e1e1e; padding: 20px; border-radius: 10px; border: 1px solid #333; }
+    .doc-item { display: flex; justify-content: space-between; align-items: center; padding: 15px; border-bottom: 1px solid #333; background: #252525; margin-bottom: 5px; border-radius: 5px; }
+    .download-btn { color: #39a86a; background: transparent; border: 1px solid #39a86a; padding: 5px 10px; border-radius: 4px; cursor: pointer; font-weight: bold; font-size: 14px; }
+    .download-btn:disabled { color: #555; border-color: #555; }
+    #logoutBtn { margin-top: 20px; padding: 10px 20px; background: #444; color: white; border: none; border-radius: 5px; cursor: pointer; }
+    #groupNameDisplay { color: #39a86a; font-weight: bold; margin-bottom: 20px; font-size: 18px; }
+    .version-footer { position: fixed; bottom: 10px; left: 50%; transform: translateX(-50%); font-size: 10px; color: #555; }
+  </style>
+</head>
+<body>
+
+  <div class="nav-links">
+    <a href="settings.html" class="btn-small">🔒 Security Settings</a>
+    <a href="admin.html" id="adminLink" class="btn-small" style="display: none;">Admin Panel</a>
+  </div>
+
+  <img src="https://img1.wsimg.com/isteam/ip/6c9b1640-2814-4751-8d24-403a493571f0/blob-ed533a7.png" alt="Logo" class="center-logo">
+
+  <h1>Dashboard</h1>
+  <p id="welcome">Checking authorization...</p>
+  <div id="groupNameDisplay"></div>
+  
+  <div class="doc-container">
+    <h3>Your Group Documents</h3>
+    <div id="userDocList">Loading...</div>
+  </div>
+
+  <button id="logoutBtn">Logout</button>
+
+  <div class="version-footer" id="appVersion"></div>
+
+  <script type="module">
+    import { initializeApp } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-app.js";
+    import { getAuth, onAuthStateChanged, signOut } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-auth.js";
+    import { getFirestore, doc, getDoc, collection, query, where, onSnapshot, getDocs, orderBy } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-firestore.js";
+
+    import firebaseConfig from './config.js';
+    document.getElementById('appVersion').textContent = firebaseConfig.version || '';
+
+    const app = initializeApp(firebaseConfig);
+    const auth = getAuth(app);
+    const db = getFirestore(app);
+
+    onAuthStateChanged(auth, async (user) => {
+      if (!user) { window.location.href = "index.html"; return; }
+      document.getElementById("welcome").textContent = `Logged in as: ${user.email}`;
+      const userSnap = await getDoc(doc(db, "users", user.uid));
+      if (userSnap.exists()) {
+        const userData = userSnap.data();
+        if (userData.role === "admin") document.getElementById("adminLink").style.display = "block";
+        if (userData.groupId) {
+          const gSnap = await getDoc(doc(db, "groups", userData.groupId));
+          if (gSnap.exists()) document.getElementById("groupNameDisplay").textContent = `Group: ${gSnap.data().name}`;
+          loadDocs(userData.groupId);
+        }
+      }
+    });
+
+    function loadDocs(gid) {
+      const q = query(collection(db, "client_documents"), where("groupId", "==", gid));
+      onSnapshot(q, (snap) => {
+        const container = document.getElementById("userDocList");
+        container.innerHTML = snap.empty ? "No documents found." : "";
+        snap.forEach(d => {
+          const data = d.data();
+          const div = document.createElement("div");
+          div.className = "doc-item";
+          div.innerHTML = `<span>🔒 ${data.fileName}</span><button class="download-btn" id="btn-${d.id}">Download</button>`;
+          container.appendChild(div);
+          document.getElementById(`btn-${d.id}`).onclick = () => window.downloadFile(d.id, data.fileName, data.mimeType);
+        });
+      });
+    }
+
+    window.downloadFile = async (docId, fileName, mimeType) => {
+      if (!auth.currentUser.emailVerified) return alert("Verify your email first.");
+      const btn = document.getElementById(`btn-${docId}`);
+      btn.disabled = true; btn.textContent = "Downloading...";
+
+      try {
+        const q = query(collection(db, `client_documents/${docId}/chunks`), orderBy("index"));
+        const snap = await getDocs(q);
+        let base64 = "";
+        snap.forEach(c => base64 += c.data().data);
+
+        const bin = atob(base64);
+        const buf = new Uint8Array(bin.length);
+        for (let i = 0; i < bin.length; i++) buf[i] = bin.charCodeAt(i);
+        const blob = new Blob([buf], { type: mimeType || 'application/octet-stream' });
+        
+        const url = URL.createObjectURL(blob);
+        const a = document.createElement("a");
+        a.href = url; a.download = fileName;
+        document.body.appendChild(a); a.click();
+        
+        setTimeout(() => { document.body.removeChild(a); URL.revokeObjectURL(url); }, 100);
+      } catch (e) { alert("Download failed."); }
+      finally { btn.disabled = false; btn.textContent = "Download"; }
+    };
+
+    document.getElementById("logoutBtn").addEventListener("click", () => signOut(auth).then(() => window.location.href = "index.html"));
+  </script>
+</body>
+</html>

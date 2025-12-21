@@ -19,6 +19,7 @@
     .deny-btn { background: #dc3545; color: white; border: none; padding: 5px; cursor: pointer; margin-top: 5px; width: auto; }
     .view-btn { background: #334e68; color: white; border: none; padding: 5px; cursor: pointer; margin-top: 5px; width: auto; margin-right: 5px; }
     .reset-btn { background: #6b46c1; color: white; border: none; padding: 3px 8px; cursor: pointer; font-size: 10px; margin-right: 4px; margin-top: 5px; border-radius: 3px; }
+    .fire-btn { background: #e53e3e; color: white; border: none; padding: 3px 8px; cursor: pointer; font-size: 10px; margin-top: 5px; border-radius: 3px; }
     select.role-select { width: auto; padding: 2px; font-size: 11px; margin-left: 10px; background: #001226; }
   </style>
 </head>
@@ -98,7 +99,6 @@
       loadPendingMinutes();
     });
 
-    // Reset All Weekly Events and Minutes
     document.getElementById("resetAllWeeklyBtn").onclick = async () => {
         if (!confirm("CONFIRMATION: Reset WEEKLY events AND minutes for EVERYONE?")) return;
         const usersSnap = await getDocs(collection(db, "users"));
@@ -110,7 +110,6 @@
         alert("All weekly counters reset.");
     };
 
-    // User Management
     async function loadUsers() {
       onSnapshot(collection(db, "users"), (snap) => {
         const list = document.getElementById("userList");
@@ -142,6 +141,7 @@
                     <button class="reset-btn" onclick="window.resetIndividual('${uDoc.id}', 'weekly', '${u.email}')">Reset Weekly</button>
                     <button class="reset-btn" onclick="window.resetIndividual('${uDoc.id}', 'promo', '${u.email}')">Reset Promo</button>
                     <button class="reset-btn" onclick="window.resetIndividual('${uDoc.id}', 'career', '${u.email}')">Reset Career</button>
+                    <button class="fire-btn" onclick="window.fireUser('${uDoc.id}', '${u.email}')">FIRE USER</button>
                 </div>
             ` : ''}
           `;
@@ -149,6 +149,12 @@
         });
       });
     }
+
+    window.fireUser = async (uid, email) => {
+        if (!confirm(`FINAL WARNING: Are you firing ${email}? This will delete their portal account and all associated data.`)) return;
+        await deleteDoc(doc(db, "users", uid));
+        alert(`${email} has been removed from the portal.`);
+    };
 
     window.updateRole = async (uid, newRole, email) => {
         if (confirm(`Change ${email}'s role to ${newRole}?`)) await updateDoc(doc(db, "users", uid), { role: newRole });
@@ -163,7 +169,6 @@
         await updateDoc(doc(db, "users", uid), updates);
     };
 
-    // Event Types Logic
     document.getElementById("addTypeBtn").onclick = async () => {
       const name = document.getElementById("newTypeName").value.trim();
       if (!name) return;
@@ -186,7 +191,6 @@
 
     window.confirmDeleteType = (id, name) => { if(confirm(`Delete "${name}"?`)) deleteDoc(doc(db, "event_types", id)); };
 
-    // Approval Logic (Events)
     function loadPendingLogs() {
       onSnapshot(collection(db, "event_pending"), (snap) => {
         const queue = document.getElementById("logQueue");
@@ -207,7 +211,6 @@
       });
     }
 
-    // Approval Logic (Minutes)
     function loadPendingMinutes() {
       onSnapshot(collection(db, "minutes_pending"), (snap) => {
         const queue = document.getElementById("minutesQueue");

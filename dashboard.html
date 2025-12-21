@@ -5,7 +5,6 @@
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title>Dashboard | NETC Portal</title>
   <style>
-    /* Keyframes for the fade-in effect */
     @keyframes fadeIn {
       from { opacity: 0; transform: translateY(10px); }
       to { opacity: 1; transform: translateY(0); }
@@ -15,14 +14,10 @@
       font-family: 'Segoe UI', sans-serif; 
       padding: 20px; 
       text-align: center; 
-      /* Background setup with bckgr2.png */
-      background: 
-        linear-gradient(rgba(0, 18, 38, 0.85), rgba(0, 18, 38, 0.85)), 
-        url('bckgr2.png');
+      background: linear-gradient(rgba(0, 18, 38, 0.85), rgba(0, 18, 38, 0.85)), url('bckgr2.png');
       background-size: cover;
       background-position: center;
       background-attachment: fixed;
-      
       color: white; 
       min-height: 100vh; 
       margin: 0; 
@@ -31,40 +26,11 @@
       align-items: center; 
     }
 
-    .nav-links { 
-      width: 100%; 
-      max-width: 1000px;
-      display: flex; 
-      justify-content: flex-end; 
-      gap: 10px; 
-      margin-bottom: 20px; 
-      animation: fadeIn 0.8s ease-out forwards;
-    }
-
-    .btn-small { 
-      padding: 8px 16px; 
-      background-color: rgba(255, 255, 255, 0.1); 
-      color: white; 
-      border: 1px solid #e2b13c; 
-      border-radius: 4px; 
-      cursor: pointer; 
-      text-decoration: none; 
-      font-size: 13px; 
-      text-transform: uppercase; 
-      transition: 0.3s; 
-    }
-
+    .nav-links { width: 100%; max-width: 1000px; display: flex; justify-content: flex-end; gap: 10px; margin-bottom: 20px; animation: fadeIn 0.8s ease-out forwards; }
+    .btn-small { padding: 8px 16px; background-color: rgba(255, 255, 255, 0.1); color: white; border: 1px solid #e2b13c; border-radius: 4px; cursor: pointer; text-decoration: none; font-size: 13px; text-transform: uppercase; transition: 0.3s; }
     .btn-small:hover { background-color: #e2b13c; color: #001226; transform: translateY(-1px); }
 
-    .center-logo { 
-      display: block; 
-      margin: 20px auto; 
-      width: 120px; 
-      height: auto; 
-      border-radius: 50%; 
-      filter: drop-shadow(0 0 10px rgba(226, 177, 60, 0.3));
-      animation: fadeIn 1s ease-out forwards;
-    }
+    .center-logo { display: block; margin: 20px auto; width: 120px; height: auto; border-radius: 50%; filter: drop-shadow(0 0 10px rgba(226, 177, 60, 0.3)); animation: fadeIn 1s ease-out forwards; }
 
     .dashboard-container { 
       background: rgba(0, 30, 60, 0.6);
@@ -80,39 +46,23 @@
     }
 
     h1 { text-transform: uppercase; letter-spacing: 2px; color: #e2b13c; margin-top: 0; text-shadow: 0 2px 4px rgba(0,0,0,0.5); }
-    
     #roleDisplay { color: #e2b13c; font-weight: bold; margin: 10px 0; font-size: 22px; text-transform: uppercase; letter-spacing: 1px; }
-
     .stats-row { display: grid; grid-template-columns: 1fr 1fr 1fr; gap: 10px; margin-bottom: 20px; }
-
-    .stat-box { 
-      background: rgba(226, 177, 60, 0.1); 
-      padding: 10px; 
-      border-radius: 5px; 
-      border: 1px solid #e2b13c; 
-      transition: transform 0.3s;
-    }
+    .stat-box { background: rgba(226, 177, 60, 0.1); padding: 10px; border-radius: 5px; border: 1px solid #e2b13c; transition: transform 0.3s; }
     .stat-box:hover { transform: scale(1.02); }
     .stat-box small { font-size: 9px; color: #e2b13c; font-weight: bold; }
     .stat-box div { font-size: 18px; font-weight: bold; }
-
     .stat-purple { border-color: #9f7aea; background: rgba(159, 122, 234, 0.1); }
     .stat-purple small, .stat-purple div { color: #9f7aea; }
 
-    #logoutBtn { 
-      margin-top: 20px; 
-      padding: 12px 30px; 
-      background: transparent; 
-      color: #ff4d4d; 
-      border: 1px solid #ff4d4d; 
-      border-radius: 4px; 
-      cursor: pointer; 
-      font-weight: bold; 
-      transition: 0.3s; 
-    }
+    #logoutBtn { margin-top: 20px; padding: 12px 30px; background: transparent; color: #ff4d4d; border: 1px solid #ff4d4d; border-radius: 4px; cursor: pointer; font-weight: bold; transition: 0.3s; }
     #logoutBtn:hover { background: #ff4d4d; color: white; }
 
     .btn-group { display: flex; gap: 10px; flex-direction: column; margin-bottom: 20px; }
+    
+    .danger-zone { margin-top: 40px; padding-top: 20px; border-top: 1px solid rgba(255, 77, 77, 0.2); }
+    .delete-acc-btn { font-size: 11px; color: rgba(255, 77, 77, 0.6); cursor: pointer; background: none; border: none; text-decoration: underline; }
+    .delete-acc-btn:hover { color: #ff4d4d; }
   </style>
 </head>
 <body>
@@ -153,12 +103,16 @@
     </div>
 
     <button id="logoutBtn">Log Out of Portal</button>
+
+    <div class="danger-zone">
+      <button class="delete-acc-btn" id="deleteAccountBtn">Resigning? Delete Portal Account</button>
+    </div>
   </div>
 
   <script type="module">
     import { initializeApp } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-app.js";
-    import { getAuth, onAuthStateChanged, signOut } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-auth.js";
-    import { getFirestore, doc, getDoc, collection, query, orderBy, limit, getDocs } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-firestore.js";
+    import { getAuth, onAuthStateChanged, signOut, deleteUser } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-auth.js";
+    import { getFirestore, doc, getDoc, collection, query, orderBy, limit, getDocs, deleteDoc } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-firestore.js";
     import firebaseConfig from './config.js';
 
     const app = initializeApp(firebaseConfig);
@@ -208,6 +162,23 @@
     }
 
     document.getElementById("logoutBtn").onclick = () => signOut(auth).then(() => window.location.replace("index.html"));
+
+    document.getElementById("deleteAccountBtn").onclick = async () => {
+      const user = auth.currentUser;
+      if (!user) return;
+
+      const confirmText = prompt("WARNING: This will permanently delete your portal data and records. To confirm, type 'DELETE' below:");
+      if (confirmText === "DELETE") {
+        try {
+          await deleteDoc(doc(db, "users", user.uid));
+          // Note: Full auth deletion usually requires recent login for security
+          await deleteUser(user); 
+          window.location.replace("index.html");
+        } catch (e) {
+          alert("For security, you must have logged in recently to delete your account. Please log out and back in, then try again.");
+        }
+      }
+    };
   </script>
 </body>
 </html>

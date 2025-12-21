@@ -150,68 +150,79 @@
 
     import firebaseConfig from './config.js';
 
-    // Initialize Firebase
     const app = initializeApp(firebaseConfig);
     const auth = getAuth(app);
     const db = getFirestore(app);
 
-    // Update Version Footer
-    const versionEl = document.getElementById('appVersion');
-    if (versionEl) {
-      versionEl.textContent = `v${firebaseConfig.version || '1.0.0'} | Authorized Personnel Only`;
-    }
-
+    const GROUP_ID = 34799343;
     let isLoggingOut = false;
 
-    // Listen for Auth State
+    // Helper function to fetch Roblox Rank Name
+    async function getRobloxRank(robloxUserId) {
+        try {
+            // Using a public proxy to bypass CORS restrictions
+            const response = await fetch(`https://groups.roproxy.com/v2/users/${robloxUserId}/groups/roles`);
+            const result = await response.json();
+            
+            // Find the specific group in the user's group list
+            const groupData = result.data.find(g => g.group.id === GROUP_ID);
+            
+            return groupData ? groupData.role.name : "Guest/Non-Member";
+        } catch (error) {
+            console.error("Roblox API Error:", error);
+            return "Unknown Rank";
+        }
+    }
+
     onAuthStateChanged(auth, async (user) => {
-      // If no user is logged in, redirect to login page
-      if (!user) {
-        if (!isLoggingOut) { 
-          window.location.replace("index.html"); 
+        if (!user) {
+            if (!isLoggingOut) window.location.replace("index.html");
+            return; 
         }
-        return; 
-      }
 
-      // If user is logged in
-      document.getElementById("welcome").textContent = `Logged in as: ${user.email}`;
+        document.getElementById("welcome").textContent = `Logged in as: ${user.email}`;
 
-      try {
-        const userRef = doc(db, "users", user.uid);
-        const userSnap = await getDoc(userRef);
+        try {
+            const userRef = doc(db, "users", user.uid);
+            const userSnap = await getDoc(userRef);
 
-        if (userSnap.exists()) {
-          const userData = userSnap.data();
-          const userRole = userData.role || "User";
-          document.getElementById("roleDisplay").textContent = userRole;
+            if (userSnap.exists()) {
+                const userData = userSnap.data();
+                const robloxId = userData.userid; // Your field name in Firestore
+                
+                // 1. Display Internal Portal Role
+                const portalRole = userData.role || "User";
+                
+                // 2. Fetch and Display Roblox Rank
+                if (robloxId) {
+                    document.getElementById("roleDisplay").textContent = "Fetching Rank...";
+                    const robloxRank = await getRobloxRank(robloxId);
+                    document.getElementById("roleDisplay").textContent = robloxRank;
+                } else {
+                    document.getElementById("roleDisplay").textContent = portalRole;
+                }
 
-          // Show Admin Panel link only if user is an admin
-          if (userRole.toLowerCase() === "admin" || userRole.toLowerCase() === "director" || userRole.toLowerCase() === "hicom") {
-            const adminLink = document.getElementById("adminLink");
-            if (adminLink) adminLink.style.display = "block";
-          }
-        } else {
-          document.getElementById("roleDisplay").textContent = "Standard Access";
+                // Show Admin Panel logic
+                if (portalRole.toLowerCase() === "admin" || portalRole.toLowerCase() === "director") {
+                    const adminLink = document.getElementById("adminLink");
+                    if (adminLink) adminLink.style.display = "block";
+                }
+            }
+        } catch (error) {
+            console.error("Error:", error);
+            document.getElementById("roleDisplay").textContent = "Service Error";
         }
-      } catch (error) {
-        console.error("Error fetching user data:", error);
-        document.getElementById("roleDisplay").textContent = "Service Error";
-      }
     });
 
-    // Logout Functionality
     document.getElementById("logoutBtn").addEventListener("click", async () => {
-      try {
-        isLoggingOut = true; 
-        document.getElementById("logoutBtn").textContent = "Logging out...";
-        await signOut(auth);
-        window.location.replace("index.html");
-      } catch (error) {
-        console.error("Logout failed", error);
-        isLoggingOut = false;
-        document.getElementById("logoutBtn").textContent = "Log Out of Portal";
-        alert("Logout failed. Please try again.");
-      }
+        try {
+            isLoggingOut = true; 
+            await signOut(auth);
+            window.location.replace("index.html");
+        } catch (error) {
+            isLoggingOut = false;
+            alert("Logout failed.");
+        }
     });
   </script>
 </body>

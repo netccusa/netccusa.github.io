@@ -1,9 +1,9 @@
 // config.js
 const firebaseConfig = {
-    apiKey: "",
-    authDomain: "",
-    projectId: "",
-    version: "v-alpha, created by pPayday"
+    apiKey: "AIzaSyBg3KRIIvzkTA8OnrEBsln-aPcjU9DrBA4",
+    authDomain: "netccusa.firebaseapp.com",
+    projectId: "netccusa",
+    version: "-alpha, created by pPayday"
 };
 
 export default firebaseConfig;

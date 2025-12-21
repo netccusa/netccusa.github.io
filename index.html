@@ -3,119 +3,196 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>Login | Naval Education and Training Command</title>
+  <title>Dashboard | NETC Portal</title>
   <style>
-    body {
-      font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
-      padding: 20px;
-      background-color: #001226;
-      text-align: center;
-      color: white;
-      min-height: 100vh;
-      margin: 0;
-      box-sizing: border-box;
+    body { 
+      font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif; 
+      padding: 20px; 
+      text-align: center; 
+      background-color: #001226; /* Deep Navy Blue */
+      color: white; 
+      min-height: 100vh; 
+      margin: 0; 
+      box-sizing: border-box; 
       display: flex;
       flex-direction: column;
-      justify-content: center;
       align-items: center;
     }
 
-    .center-logo {
-      display: block;
+    .nav-links { 
+      width: 100%;
+      display: flex; 
+      justify-content: flex-end;
+      gap: 10px; 
       margin-bottom: 20px;
-      width: 150px; 
-      max-width: 80%;
-      height: auto;
+    }
+
+    .btn-small { 
+      padding: 8px 16px; 
+      background-color: rgba(255, 255, 255, 0.1); 
+      color: white; 
+      border: 1px solid #e2b13c; 
+      border-radius: 4px; 
+      cursor: pointer; 
+      text-decoration: none; 
+      font-size: 13px; 
+      text-transform: uppercase;
+      transition: 0.3s;
+    }
+
+    .btn-small:hover {
+      background-color: #e2b13c;
+      color: #001226;
+    }
+
+    .center-logo { 
+      display: block; 
+      margin: 20px auto; 
+      width: 120px; 
+      height: auto; 
       border-radius: 50%;
     }
 
-    h2 {
-      text-transform: uppercase;
-      letter-spacing: 2px;
-      margin-bottom: 30px;
-      font-weight: 300;
-      color: #e2b13c;
-    }
-
-    .login-container {
+    .dashboard-container {
       background: rgba(255, 255, 255, 0.05);
       padding: 40px;
       border-radius: 8px;
       border-top: 3px solid #e2b13c;
       width: 100%;
-      max-width: 350px;
+      max-width: 500px;
       box-shadow: 0 10px 30px rgba(0,0,0,0.5);
     }
 
-    input {
-      display: block;
-      margin: 15px auto;
-      padding: 12px;
-      width: 100%;
-      border-radius: 4px;
-      border: 1px solid #334e68;
-      background-color: #001e3c;
-      color: white;
-      box-sizing: border-box;
-    }
-
-    button {
-      margin-top: 15px;
-      padding: 12px;
-      width: 100%;
-      background-color: #e2b13c;
-      color: #001226;
-      border: none;
-      border-radius: 4px;
-      cursor: pointer;
-      font-weight: bold;
+    h1 {
       text-transform: uppercase;
-    }
-
-    .signup-redirect {
-      margin-top: 25px;
-      font-size: 13px;
-      color: #cbd5e0;
-    }
-
-    .signup-redirect a {
+      letter-spacing: 2px;
       color: #e2b13c;
-      text-decoration: none;
-      font-weight: bold;
+      margin-top: 0;
     }
 
-    .version-footer {
-      position: fixed;
-      bottom: 15px;
-      font-size: 11px;
-      color: #4a5568;
+    #roleDisplay { 
+      color: #e2b13c; 
+      font-weight: bold; 
+      margin: 10px 0; 
+      font-size: 22px; 
+      text-transform: uppercase;
+      letter-spacing: 1px;
+    }
+
+    #welcome {
+      color: #cbd5e0;
+      font-size: 14px;
+      margin-bottom: 20px;
+    }
+
+    .status-badge {
+      display: inline-block;
+      padding: 5px 15px;
+      border-radius: 20px;
+      background: #1e5c39;
+      font-size: 12px;
+      margin-bottom: 20px;
+    }
+
+    #logoutBtn { 
+      margin-top: 20px; 
+      padding: 12px 30px; 
+      background: transparent; 
+      color: #ff4d4d; 
+      border: 1px solid #ff4d4d; 
+      border-radius: 4px; 
+      cursor: pointer; 
+      font-weight: bold;
+      transition: 0.3s;
+    }
+
+    #logoutBtn:hover {
+      background: #ff4d4d;
+      color: white;
+    }
+
+    .version-footer { 
+      position: fixed; 
+      bottom: 15px; 
+      font-size: 11px; 
+      color: #4a5568; 
       letter-spacing: 1px;
     }
   </style>
 </head>
 <body>
 
+  <div class="nav-links">
+    <a href="settings.html" class="btn-small">Security Settings</a>
+    <a href="admin.html" id="adminLink" class="btn-small" style="display: none;">Admin Panel</a>
+  </div>
+
   <img src="https://lh3.googleusercontent.com/sitesv/AAzXCkeSksntaTMqW1oo1uFgl3Fmc2yKa4FUk_5MsgZ9L_DOopmfHoxoJwHn7Ub-qO--ydPYr1T3yoRKmN7znGt-y84zKXA2hr7irUxcFMxzHxKFWwRL2HoafEXa6LjQ1y8VIvpSd6ePg4-6Bd1ZTe3zTRK7-_6kzbIBbN--hzBd4zVbDh-ZnVbBdO08KEs=w16383" alt="NETC Command Seal" class="center-logo">
 
-  <div class="login-container">
-    <h2>NETC Portal</h2>
-    <input id="email" type="email" placeholder="Email">
-    <input id="password" type="password" placeholder="Password">
-    <button id="loginBtn">Secure Login</button>
+  <div class="dashboard-container">
+    <h1>Command Dashboard</h1>
+    <div class="status-badge">System Status: Secure</div>
+    
+    <p id="welcome">Verifying credentials...</p>
+    
+    <div style="font-size: 12px; color: #718096; text-transform: uppercase;">Assigned Role</div>
+    <div id="roleDisplay">Loading...</div>
 
-    <p class="signup-redirect">
-      Authorized personnel without access: <a href="signup.html">Register here</a>
-    </p>
+    <button id="logoutBtn">Log Out of Portal</button>
   </div>
 
   <div class="version-footer" id="appVersion"></div>
 
   <script type="module">
-    import firebaseConfig from './config.js';
-    document.getElementById('appVersion').textContent = `v${firebaseConfig.version || '1.0.0'} | Restricted Access`;
-  </script>
-  
-  <script type="module" src="auth.js"></script>
+    import { initializeApp } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-app.js";
+    import { getAuth, onAuthStateChanged, signOut } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-auth.js";
+    import { getFirestore, doc, getDoc } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-firestore.js";
 
+    import firebaseConfig from './config.js';
+    document.getElementById('appVersion').textContent = `v${firebaseConfig.version || '1.0.0'} | Authorized Personnel Only`;
+
+    const app = initializeApp(firebaseConfig);
+    const auth = getAuth(app);
+    const db = getFirestore(app);
+
+    onAuthStateChanged(auth, async (user) => {
+      if (!user) { 
+        window.location.href = "index.html"; 
+        return; 
+      }
+
+      document.getElementById("welcome").textContent = `Logged in as: ${user.email}`;
+
+      try {
+        // Fetch user data from the 'users' collection using the UID
+        const userRef = doc(db, "users", user.uid);
+        const userSnap = await getDoc(userRef);
+
+        if (userSnap.exists()) {
+          const userData = userSnap.data();
+          
+          // Display the role field string
+          const userRole = userData.role || "No Role Assigned";
+          document.getElementById("roleDisplay").textContent = userRole;
+
+          // If role is admin, show the admin panel link
+          if (userRole.toLowerCase() === "admin") {
+            document.getElementById("adminLink").style.display = "block";
+          }
+        } else {
+          document.getElementById("roleDisplay").textContent = "Profile Not Found";
+        }
+      } catch (error) {
+        console.error("Error fetching user data:", error);
+        document.getElementById("roleDisplay").textContent = "Error Loading Role";
+      }
+    });
+
+    document.getElementById("logoutBtn").addEventListener("click", () => {
+      signOut(auth).then(() => {
+        window.location.href = "index.html";
+      });
+    });
+  </script>
 </body>
 </html>

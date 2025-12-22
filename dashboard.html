@@ -159,6 +159,10 @@
 
     <div class="stats-header">Weekly Quota Progress</div>
     <div id="quotaContainer"></div>
+    <div class="progress-section" style="margin-top: 15px;">
+      <div class="progress-label"><span>Total Promotion Progress</span><span id="qTotalTxt">0%</span></div>
+      <div class="progress-bar-bg"><div id="qTotalBar" class="progress-fill fill-total"></div></div>
+    </div>
 
     <div class="stats-header">Promotion Progress</div>
     <div id="promoContainer"></div>
@@ -209,10 +213,12 @@
         const qReq = qReqSnap.exists() ? qReqSnap.data() : { tryouts: 0, bootcamps: 0, other: 0, minutes: 0 };
         const pReq = pReqSnap.exists() ? pReqSnap.data() : { tryouts: 0, bootcamps: 0, other: 0, minutes: 0 };
 
-        renderBars("quotaContainer", data.quota, qReq, false);
+        const quotaAvg = renderBars("quotaContainer", data.quota, qReq, true);
         const promoAvg = renderBars("promoContainer", data.promo, pReq, true);
 
         // Update the Total Progress Bar
+        document.getElementById("qTotalBar").style.width = quotaAvg + "%";
+        document.getElementById("qTotalTxt").textContent = quotaAvg + "%";
         document.getElementById("pTotalBar").style.width = promoAvg + "%";
         document.getElementById("pTotalTxt").textContent = promoAvg + "%";
       });

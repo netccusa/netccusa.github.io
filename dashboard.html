@@ -5,31 +5,28 @@
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title>Dashboard | NETC Portal</title>
   <style>
-    @keyframes fadeIn { from { opacity: 0; transform: translateY(10px); } to { opacity: 1; transform: translateY(0); } }
-    body { font-family: 'Segoe UI', sans-serif; padding: 20px; text-align: center; background: linear-gradient(rgba(0, 18, 38, 0.85), rgba(0, 18, 38, 0.85)), url('bckgr2.png'); background-size: cover; background-position: center; background-attachment: fixed; color: white; min-height: 100vh; margin: 0; display: flex; flex-direction: column; align-items: center; }
-    .nav-links { width: 100%; max-width: 1000px; display: flex; justify-content: flex-end; gap: 10px; margin-bottom: 20px; }
-    .btn-small { padding: 8px 16px; background-color: rgba(255, 255, 255, 0.1); color: white; border: 1px solid #e2b13c; border-radius: 4px; cursor: pointer; text-decoration: none; font-size: 13px; text-transform: uppercase; transition: 0.3s; }
-    .btn-small:hover { background-color: #e2b13c; color: #001226; }
-    .center-logo { display: block; margin: 20px auto; width: 100px; }
-    .dashboard-container { background: rgba(0, 30, 60, 0.6); backdrop-filter: blur(10px); padding: 40px; border-radius: 8px; border-top: 3px solid #e2b13c; width: 100%; max-width: 650px; box-shadow: 0 20px 50px rgba(0,0,0,0.6); animation: fadeIn 1s ease-out; }
-    h1 { text-transform: uppercase; letter-spacing: 2px; color: #e2b13c; margin: 0; }
-    #roleDisplay { color: #e2b13c; font-weight: bold; margin: 10px 0; font-size: 20px; text-transform: uppercase; }
+    body { font-family: 'Segoe UI', sans-serif; padding: 20px; text-align: center; background: #001226; color: white; margin: 0; display: flex; flex-direction: column; align-items: center; }
+    .nav-links { width: 100%; max-width: 800px; display: flex; justify-content: flex-end; margin-bottom: 20px; }
+    .btn-small { padding: 8px 16px; background: rgba(255,255,255,0.1); color: white; border: 1px solid #e2b13c; border-radius: 4px; cursor: pointer; text-decoration: none; font-size: 12px; text-transform: uppercase; }
+    .dashboard-container { background: rgba(0, 30, 60, 0.6); padding: 30px; border-radius: 8px; border-top: 3px solid #e2b13c; width: 100%; max-width: 600px; box-shadow: 0 20px 50px rgba(0,0,0,0.5); }
+    h1 { color: #e2b13c; margin: 0; text-transform: uppercase; font-size: 24px; }
+    #roleDisplay { color: #e2b13c; margin: 5px 0 20px 0; font-size: 18px; }
     
-    .stats-header { font-size: 11px; color: #718096; text-transform: uppercase; letter-spacing: 1px; margin-top: 25px; margin-bottom: 10px; text-align: left; border-bottom: 1px solid rgba(255,255,255,0.1); padding-bottom: 5px; }
+    .stats-header { font-size: 11px; color: #718096; text-transform: uppercase; margin: 25px 0 10px 0; text-align: left; border-bottom: 1px solid rgba(255,255,255,0.1); padding-bottom: 5px; }
     
     .progress-section { margin-bottom: 12px; text-align: left; }
-    .progress-label { display: flex; justify-content: space-between; font-size: 11px; margin-bottom: 4px; text-transform: uppercase; }
-    .progress-bar-bg { background: rgba(255,255,255,0.05); height: 8px; border-radius: 4px; overflow: hidden; border: 1px solid rgba(226, 177, 60, 0.2); }
+    .progress-label { display: flex; justify-content: space-between; font-size: 11px; margin-bottom: 4px; }
+    .progress-bar-bg { background: rgba(255,255,255,0.05); height: 8px; border-radius: 4px; border: 1px solid rgba(226, 177, 60, 0.2); overflow: hidden; }
     .progress-fill { background: #e2b13c; height: 100%; width: 0%; transition: width 0.8s; }
-    .fill-mins { background: #9f7aea; }
-    .fill-total { background: #28a745; }
 
-    .global-stats { background: rgba(255, 255, 255, 0.03); border: 1px dashed rgba(226, 177, 60, 0.3); border-radius: 6px; padding: 15px; margin: 20px 0; display: flex; justify-content: space-around; }
-    .global-item span { display: block; font-size: 20px; font-weight: bold; color: #e2b13c; }
-    .global-item label { font-size: 9px; color: #718096; text-transform: uppercase; }
+    .stat-box-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; margin-top: 10px; }
+    .stat-box { background: rgba(255,255,255,0.03); padding: 15px; border-radius: 6px; border: 1px solid rgba(255,255,255,0.05); }
+    .stat-box span { display: block; font-size: 22px; font-weight: bold; color: #e2b13c; }
+    .stat-box label { font-size: 9px; color: #718096; text-transform: uppercase; }
 
-    .btn-group { display: flex; gap: 10px; flex-direction: column; margin-top: 20px; }
-    #logoutBtn { margin-top: 30px; background: none; color: #ff4d4d; border: 1px solid #ff4d4d; padding: 10px; cursor: pointer; border-radius: 4px; width: 100%; }
+    .btn-group { display: flex; gap: 10px; flex-direction: column; margin-top: 25px; }
+    .action-btn { background: #e2b13c; color: #001226; padding: 12px; border: none; border-radius: 4px; font-weight: bold; text-decoration: none; font-size: 14px; }
+    #resignBtn { margin-top: 40px; background: none; color: #ff4d4d; border: 1px solid #ff4d4d; padding: 8px; cursor: pointer; border-radius: 4px; font-size: 11px; }
   </style>
 </head>
 <body>
@@ -38,71 +35,41 @@
     <a href="admin.html" id="adminLink" class="btn-small" style="display: none;">Admin Panel</a>
   </div>
 
-  <img src="netc.png" class="center-logo">
-
   <div class="dashboard-container">
-    <div id="notifArea"></div>
     <h1>NETC Portal</h1>
     <div id="roleDisplay">Loading...</div>
 
-    <div class="stats-header">Network Weekly Volume</div>
-    <div class="global-stats">
-        <div class="global-item"><span id="gEvents">0</span><label>Total Events</label></div>
-        <div class="global-item"><span id="gMins" style="color: #9f7aea;">0</span><label>Total Minutes</label></div>
+    <div class="stats-header">Career Statistics</div>
+    <div class="stat-box-grid">
+      <div class="stat-box"><span id="cEvents">0</span><label>Lifetime Events</label></div>
+      <div class="stat-box"><span id="cMins">0</span><label>Lifetime Minutes</label></div>
     </div>
 
-    <div class="stats-header">Promotion Progress</div>
-    <div class="progress-section">
-        <div class="progress-label"><span>Tryouts</span><span id="pTryTxt">0/0</span></div>
-        <div class="progress-bar-bg"><div id="pTryBar" class="progress-fill"></div></div>
-    </div>
-    <div class="progress-section">
-        <div class="progress-label"><span>Bootcamps</span><span id="pBootTxt">0/0</span></div>
-        <div class="progress-bar-bg"><div id="pBootBar" class="progress-fill"></div></div>
-    </div>
-    <div class="progress-section">
-        <div class="progress-label"><span>Other Events</span><span id="pOtherTxt">0/0</span></div>
-        <div class="progress-bar-bg"><div id="pOtherBar" class="progress-fill"></div></div>
-    </div>
-    <div class="progress-section">
-        <div class="progress-label"><span>Minutes</span><span id="pMinTxt">0/0</span></div>
-        <div class="progress-bar-bg"><div id="pMinBar" class="progress-fill fill-mins"></div></div>
-    </div>
-    <div class="progress-section">
-        <div class="progress-label"><span>Total Progress</span><span id="pTotalTxt">0%</span></div>
-        <div class="progress-bar-bg"><div id="pTotalBar" class="progress-fill fill-total"></div></div>
+    <div class="stats-header">Divisions Weekly Statistics</div>
+    <div class="stat-box-grid" style="margin-bottom: 20px;">
+      <div class="stat-box"><span id="gEvents">0</span><label>Total Events</label></div>
+      <div class="stat-box"><span id="gMins">0</span><label>Total Minutes</label></div>
     </div>
 
     <div class="stats-header">Weekly Quota Progress</div>
-    <div class="progress-section">
-        <div class="progress-label"><span>Tryouts</span><span id="qTryTxt">0/0</span></div>
-        <div class="progress-bar-bg"><div id="qTryBar" class="progress-fill"></div></div>
-    </div>
-    <div class="progress-section">
-        <div class="progress-label"><span>Bootcamps</span><span id="qBootTxt">0/0</span></div>
-        <div class="progress-bar-bg"><div id="qBootBar" class="progress-fill"></div></div>
-    </div>
-    <div class="progress-section">
-        <div class="progress-label"><span>Other Events</span><span id="qOtherTxt">0/0</span></div>
-        <div class="progress-bar-bg"><div id="qOtherBar" class="progress-fill"></div></div>
-    </div>
-    <div class="progress-section">
-        <div class="progress-label"><span>Minutes</span><span id="qMinTxt">0/0</span></div>
-        <div class="progress-bar-bg"><div id="qMinBar" class="progress-fill fill-mins"></div></div>
-    </div>
+    <div id="quotaContainer"></div>
+
+    <div class="stats-header">Promotion Progress</div>
+    <div id="promoContainer"></div>
 
     <div class="btn-group">
-        <a href="eventlogs.html" class="btn-small">Submit Event Log</a>
-        <a href="minuteslogs.html" class="btn-small" style="border-color: #9f7aea; color: #9f7aea;">Submit Minutes Log</a>
+      <a href="eventlogs.html" class="action-btn">Submit Event Log</a>
+      <a href="minuteslogs.html" class="action-btn" style="background: #9f7aea; color: white;">Submit Minutes Log</a>
     </div>
 
-    <button id="logoutBtn">Log Out</button>
+    <button id="logoutBtn" style="margin-top: 20px; background:none; border:none; color:#718096; cursor:pointer;">Logout</button>
+    <button id="resignBtn">RESIGN (DELETE ACCOUNT)</button>
   </div>
 
   <script type="module">
     import { initializeApp } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-app.js";
-    import { getAuth, onAuthStateChanged, signOut } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-auth.js";
-    import { getFirestore, doc, getDoc, collection, onSnapshot, query, orderBy, limit } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-firestore.js";
+    import { getAuth, onAuthStateChanged, signOut, deleteUser } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-auth.js";
+    import { getFirestore, doc, getDoc, onSnapshot, collection, deleteDoc } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-firestore.js";
     import firebaseConfig from './config.js';
 
     const app = initializeApp(firebaseConfig);
@@ -117,33 +84,25 @@
         const data = snap.data();
         const rank = data.role || "User";
         document.getElementById("roleDisplay").textContent = rank;
+        document.getElementById("cEvents").textContent = data.totalEvents || 0;
+        document.getElementById("cMins").textContent = data.totalMinutes || 0;
 
-        // Admin Visibility
+        // Admin Access
         const staff = ["hicom", "deputy director", "director", "headquarters", "secnav", "commander in chief", "admin"];
         if (staff.includes(rank.toLowerCase())) document.getElementById("adminLink").style.display = "block";
 
-        // Requirements
-        const reqSnap = await getDoc(doc(db, "requirements", rank));
-        const req = reqSnap.exists() ? reqSnap.data() : { tryouts: 0, bootcamps: 0, other: 0, minutes: 0 };
+        // Requirements Fetching
+        const qReqSnap = await getDoc(doc(db, "quotas", rank));
+        const pReqSnap = await getDoc(doc(db, "requirements", rank));
+        
+        const qReq = qReqSnap.exists() ? qReqSnap.data() : { tryouts: 0, bootcamps: 0, other: 0, minutes: 0 };
+        const pReq = pReqSnap.exists() ? pReqSnap.data() : { tryouts: 0, bootcamps: 0, other: 0, minutes: 0 };
 
-        // Update Promo Bars
-        const p1 = updateBar("pTry", data.promo?.tryouts, req.tryouts);
-        const p2 = updateBar("pBoot", data.promo?.bootcamps, req.bootcamps);
-        const p3 = updateBar("pOther", data.promo?.other, req.other);
-        const p4 = updateBar("pMin", data.promo?.minutes, req.minutes);
-
-        const totalP = Math.floor((p1 + p2 + p3 + p4) / 4);
-        document.getElementById("pTotalBar").style.width = totalP + "%";
-        document.getElementById("pTotalTxt").textContent = totalP + "%";
-
-        // Update Quota Bars (Same logic as Promo for consistency)
-        updateBar("qTry", data.quota?.tryouts, req.tryouts);
-        updateBar("qBoot", data.quota?.bootcamps, req.bootcamps);
-        updateBar("qOther", data.quota?.other, req.other);
-        updateBar("qMin", data.quota?.minutes, req.minutes);
+        renderBars("quotaContainer", data.quota, qReq);
+        renderBars("promoContainer", data.promo, pReq);
       });
 
-      // Global Stats
+      // Divisions Statistics
       onSnapshot(collection(db, "users"), (snap) => {
         let e = 0, m = 0;
         snap.forEach(d => {
@@ -154,17 +113,33 @@
         document.getElementById("gEvents").textContent = e;
         document.getElementById("gMins").textContent = m;
       });
+
+      document.getElementById("resignBtn").onclick = async () => {
+        if(confirm("Are you sure you want to resign? This deletes your account forever.")){
+          await deleteDoc(doc(db, "users", user.uid));
+          await deleteUser(user);
+          window.location.replace("index.html");
+        }
+      };
     });
 
-    function updateBar(id, cur, req) {
-      cur = cur || 0; req = req || 0;
-      const perc = req <= 0 ? 100 : Math.min((cur/req)*100, 100);
-      document.getElementById(id + "Bar").style.width = perc + "%";
-      document.getElementById(id + "Txt").textContent = `${cur}/${req}`;
-      return perc;
+    function renderBars(containerId, current, required) {
+      const cont = document.getElementById(containerId);
+      cont.innerHTML = "";
+      const fields = ["tryouts", "bootcamps", "other", "minutes"];
+      fields.forEach(f => {
+        const cur = current?.[f] || 0;
+        const req = required?.[f] || 0;
+        const perc = req <= 0 ? 100 : Math.min((cur/req)*100, 100);
+        cont.innerHTML += `
+          <div class="progress-section">
+            <div class="progress-label"><span>${f.toUpperCase()}</span><span>${cur}/${req}</span></div>
+            <div class="progress-bar-bg"><div class="progress-fill" style="width:${perc}%"></div></div>
+          </div>`;
+      });
     }
 
-    document.getElementById("logoutBtn").onclick = () => signOut(auth).then(() => window.location.replace("index.html"));
+    document.getElementById("logoutBtn").onclick = () => signOut(auth);
   </script>
 </body>
 </html>

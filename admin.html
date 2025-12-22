@@ -10,19 +10,20 @@
     .btn-small { padding: 8px 16px; background: rgba(255,255,255,0.1); color: white; border: 1px solid #e2b13c; border-radius: 4px; cursor: pointer; text-decoration: none; font-size: 13px; text-transform: uppercase; }
     .admin-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 20px; width: 100%; max-width: 1200px; }
     .admin-container { background: rgba(255,255,255,0.05); padding: 25px; border-radius: 8px; border-top: 3px solid #e2b13c; box-shadow: 0 10px 30px rgba(0,0,0,0.5); margin-bottom: 20px; }
-    h2 { text-transform: uppercase; letter-spacing: 2px; color: #e2b13c; font-size: 18px; }
+    h2 { text-transform: uppercase; letter-spacing: 2px; color: #e2b13c; font-size: 18px; margin-top: 0; }
     input, select, button { width: 100%; padding: 10px; margin-top: 5px; border-radius: 4px; border: 1px solid #334e68; background: #001e3c; color: white; box-sizing: border-box; }
     .action-btn { background: #e2b13c; color: #001226; font-weight: bold; cursor: pointer; border: none; }
-    .user-list-container, .log-queue { max-height: 500px; overflow-y: auto; text-align: left; background: rgba(0,0,0,0.2); padding: 10px; border-radius: 4px; }
-    .card { background: rgba(255,255,255,0.05); padding: 10px; margin-bottom: 10px; border-left: 3px solid #e2b13c; font-size: 13px; }
-    .approve-btn { background: #28a745; color: white; border: none; padding: 5px; cursor: pointer; margin-top: 5px; width: auto; margin-right: 5px; }
-    .deny-btn { background: #dc3545; color: white; border: none; padding: 5px; cursor: pointer; margin-top: 5px; width: auto; }
-    .view-btn { background: #334e68; color: white; border: none; padding: 5px; cursor: pointer; margin-top: 5px; width: auto; margin-right: 5px; }
-    .reset-btn { background: #6b46c1; color: white; border: none; padding: 3px 8px; cursor: pointer; font-size: 10px; margin-right: 4px; margin-top: 5px; border-radius: 3px; }
-    .fire-btn { background: #e53e3e; color: white; border: none; padding: 3px 8px; cursor: pointer; font-size: 10px; margin-top: 5px; border-radius: 3px; }
-    select.role-select { width: auto; padding: 2px; font-size: 11px; margin-left: 10px; background: #001226; }
+    .user-list-container { max-height: 600px; overflow-y: auto; text-align: left; background: rgba(0,0,0,0.2); padding: 10px; border-radius: 4px; }
+    .log-queue { max-height: 300px; overflow-y: auto; }
+    .card { background: rgba(255,255,255,0.05); padding: 12px; margin-bottom: 10px; border-left: 3px solid #e2b13c; font-size: 13px; }
+    .btn-row { display: flex; gap: 5px; margin-top: 8px; flex-wrap: wrap; }
+    .approve-btn { background: #28a745; color: white; border: none; padding: 5px 10px; cursor: pointer; width: auto; border-radius: 3px; }
+    .deny-btn { background: #dc3545; color: white; border: none; padding: 5px 10px; cursor: pointer; width: auto; border-radius: 3px; }
+    .reset-btn { background: #6b46c1; color: white; border: none; padding: 5px 10px; cursor: pointer; font-size: 11px; width: auto; border-radius: 3px; }
+    .fire-btn { background: #e53e3e; color: white; border: none; padding: 5px 10px; cursor: pointer; font-size: 11px; width: auto; border-radius: 3px; }
     .req-grid { display: grid; grid-template-columns: 1fr 1fr 1fr 1fr; gap: 5px; margin-top: 10px; }
     .req-grid input { padding: 5px; font-size: 11px; }
+    label { font-size: 10px; color: #718096; text-transform: uppercase; }
   </style>
 </head>
 <body>
@@ -31,49 +32,40 @@
   <div class="admin-grid">
     <div>
       <div class="admin-container">
-        <h2>Authorize Access</h2>
-        <input type="email" id="inviteEmail" placeholder="Email">
-        <input type="number" id="inviteRobloxId" placeholder="Roblox ID">
-        <button class="action-btn" id="sendInviteBtn">Authorize</button>
-      </div>
-
-      <div class="admin-container">
-        <div style="display: flex; justify-content: space-between; align-items: center;">
-            <h2>Personnel Management</h2>
-            <button class="reset-btn" id="resetAllWeeklyBtn" style="background: #e53e3e; padding: 5px 10px;">RESET ALL QUOTA</button>
-        </div>
+        <h2>Personnel Management</h2>
         <div id="userList" class="user-list-container">Loading personnel...</div>
       </div>
     </div>
 
     <div>
-      <div class="admin-container" id="rankManager">
-        <h2>Rank Requirements Manager</h2>
-        <select id="reqRankSelect"></select>
+      <div class="admin-container">
+        <h2>Promotion Requirements</h2>
+        <select id="promoRankSelect"></select>
         <div class="req-grid">
-          <div><label style="font-size:10px">Other</label><input type="number" id="reqOther" value="0"></div>
-          <div><label style="font-size:10px">Tryouts</label><input type="number" id="reqTryouts" value="0"></div>
-          <div><label style="font-size:10px">Bootcamps</label><input type="number" id="reqBootcamps" value="0"></div>
-          <div><label style="font-size:10px">Minutes</label><input type="number" id="reqMins" value="0"></div>
+          <div><label>Other</label><input type="number" id="pReqOther" value="0"></div>
+          <div><label>Tryouts</label><input type="number" id="pReqTry" value="0"></div>
+          <div><label>Bootcamps</label><input type="number" id="pReqBoot" value="0"></div>
+          <div><label>Mins</label><input type="number" id="pReqMin" value="0"></div>
         </div>
-        <button class="action-btn" id="saveReqBtn" style="margin-top:10px">Save Requirements</button>
+        <button class="action-btn" id="savePromoBtn" style="margin-top:10px">Save Promotion Req</button>
       </div>
 
-      <div class="admin-container" id="typeManager">
-        <h2>Event Type Management</h2>
-        <input type="text" id="newTypeName" placeholder="e.g. Basic Combat Training">
-        <button class="action-btn" id="addTypeBtn">Add Event Type</button>
-        <div id="typeList" style="margin-top:10px; font-size:12px;"></div>
+      <div class="admin-container" style="border-top-color: #38b2ac;">
+        <h2 style="color: #38b2ac;">Weekly Quota Requirements</h2>
+        <select id="quotaRankSelect"></select>
+        <div class="req-grid">
+          <div><label>Other</label><input type="number" id="qReqOther" value="0"></div>
+          <div><label>Tryouts</label><input type="number" id="qReqTry" value="0"></div>
+          <div><label>Bootcamps</label><input type="number" id="qReqBoot" value="0"></div>
+          <div><label>Mins</label><input type="number" id="qReqMin" value="0"></div>
+        </div>
+        <button class="action-btn" id="saveQuotaBtn" style="margin-top:10px; background: #38b2ac;">Save Weekly Quota</button>
       </div>
 
       <div class="admin-container">
-        <h2>Awaiting Approval (Events)</h2>
-        <div id="logQueue" class="log-queue">No pending event logs.</div>
-      </div>
-
-      <div class="admin-container" style="border-top-color: #9f7aea;">
-        <h2 style="color: #9f7aea;">Awaiting Approval (Minutes)</h2>
-        <div id="minutesQueue" class="log-queue">No pending minutes logs.</div>
+        <h2>Awaiting Approval</h2>
+        <div id="logQueue" class="log-queue">No pending logs.</div>
+        <div id="minutesQueue" class="log-queue" style="margin-top:15px; border-top: 1px solid rgba(255,255,255,0.1); padding-top: 10px;"></div>
       </div>
     </div>
   </div>
@@ -100,62 +92,45 @@
       "Director", "Headquarters", "SECNAV", "Commander in Chief", "Admin"
     ];
 
-    let currentUserUid = "";
-
     onAuthStateChanged(auth, async (user) => {
       if (!user) return window.location.replace("index.html");
-      currentUserUid = user.uid;
       const userSnap = await getDoc(doc(db, "users", user.uid));
-      if (!userSnap.exists()) return window.location.replace("dashboard.html");
-      
-      const myRank = userSnap.data().role || "User";
-      const staffRanks = ["hicom", "deputy director", "director", "headquarters", "secnav", "commander in chief", "admin"];
-      if (!staffRanks.includes(myRank.toLowerCase())) return window.location.replace("dashboard.html");
+      const myRank = userSnap.data()?.role?.toLowerCase() || "";
+      const staff = ["hicom", "deputy director", "director", "headquarters", "secnav", "commander in chief", "admin"];
+      if (!staff.includes(myRank)) return window.location.replace("dashboard.html");
 
-      initRankDropdown();
+      initDropdowns();
       loadUsers();
-      loadEventTypes();
       loadPendingLogs();
       loadPendingMinutes();
     });
 
-    function initRankDropdown() {
-      const sel = document.getElementById("reqRankSelect");
+    function initDropdowns() {
+      const pSel = document.getElementById("promoRankSelect");
+      const qSel = document.getElementById("quotaRankSelect");
       ranks.forEach(r => {
-        const opt = document.createElement("option");
-        opt.value = r; opt.textContent = r;
-        sel.appendChild(opt);
+        let o1 = document.createElement("option"); o1.value = r; o1.textContent = r; pSel.appendChild(o1);
+        let o2 = document.createElement("option"); o2.value = r; o2.textContent = r; qSel.appendChild(o2);
       });
     }
 
-    document.getElementById("saveReqBtn").onclick = async () => {
-      const rank = document.getElementById("reqRankSelect").value;
+    // Save Handlers
+    document.getElementById("savePromoBtn").onclick = () => saveReq("requirements", "promoRankSelect", "pReq");
+    document.getElementById("saveQuotaBtn").onclick = () => saveReq("quotas", "quotaRankSelect", "qReq");
+
+    async function saveReq(coll, selectId, prefix) {
+      const rank = document.getElementById(selectId).value;
       const data = {
-        other: parseInt(document.getElementById("reqOther").value) || 0,
-        tryouts: parseInt(document.getElementById("reqTryouts").value) || 0,
-        bootcamps: parseInt(document.getElementById("reqBootcamps").value) || 0,
-        minutes: parseInt(document.getElementById("reqMins").value) || 0
+        other: parseInt(document.getElementById(prefix+"Other").value) || 0,
+        tryouts: parseInt(document.getElementById(prefix+"Try").value) || 0,
+        bootcamps: parseInt(document.getElementById(prefix+"Boot").value) || 0,
+        minutes: parseInt(document.getElementById(prefix+"Min").value) || 0
       };
-      try {
-        await setDoc(doc(db, "requirements", rank), data);
-        alert("Saved requirements for " + rank);
-      } catch (e) { alert("Error: " + e.message); }
-    };
+      await setDoc(doc(db, coll, rank), data);
+      alert("Saved to " + coll);
+    }
 
-    document.getElementById("resetAllWeeklyBtn").onclick = async () => {
-      if (!confirm("RESET ALL QUOTAS? This affects every user.")) return;
-      const snap = await getDocs(collection(db, "users"));
-      const batch = writeBatch(db);
-      snap.forEach(uDoc => {
-        batch.update(uDoc.ref, { 
-          "quota.other": 0, "quota.tryouts": 0, "quota.bootcamps": 0, "quota.minutes": 0 
-        });
-      });
-      await batch.commit();
-      alert("All Quotas Reset.");
-    };
-
-    async function loadUsers() {
+    function loadUsers() {
       onSnapshot(collection(db, "users"), (snap) => {
         const list = document.getElementById("userList");
         list.innerHTML = "";
@@ -165,108 +140,49 @@
           div.className = "card";
           div.innerHTML = `
             <strong>${u.email}</strong> [${u.role || 'User'}]<br>
-            Quota (T/B/O/M): ${(u.quota?.tryouts || 0)}/${(u.quota?.bootcamps || 0)}/${(u.quota?.other || 0)}/${(u.quota?.minutes || 0)}<br>
-            <button class="reset-btn" onclick="window.resetIndividual('${uDoc.id}', 'quota')">Reset Quota</button>
-            <button class="reset-btn" onclick="window.resetIndividual('${uDoc.id}', 'promo')">Reset Promo</button>
+            <label>Career:</label> ${u.totalEvents || 0} Events | ${u.totalMinutes || 0} Mins<br>
+            <div class="btn-row">
+              <button class="reset-btn" onclick="window.resetData('${uDoc.id}', 'quota')">Reset Quota</button>
+              <button class="reset-btn" onclick="window.resetData('${uDoc.id}', 'promo')">Reset Promo</button>
+              <button class="reset-btn" style="background:#4a5568" onclick="window.resetData('${uDoc.id}', 'career')">Clear Career</button>
+              <button class="fire-btn" onclick="window.fireUser('${uDoc.id}')">FIRE</button>
+            </div>
           `;
           list.appendChild(div);
         });
       });
     }
 
-    window.resetIndividual = async (uid, type) => {
-      const updates = {};
-      if (type === 'quota') updates.quota = { other: 0, tryouts: 0, bootcamps: 0, minutes: 0 };
-      if (type === 'promo') updates.promo = { other: 0, tryouts: 0, bootcamps: 0, minutes: 0 };
-      await updateDoc(doc(db, "users", uid), updates);
+    window.resetData = async (uid, type) => {
+      if(!confirm(`Reset ${type} data?`)) return;
+      const ref = doc(db, "users", uid);
+      if(type === 'quota') await updateDoc(ref, { quota: { other:0, tryouts:0, bootcamps:0, minutes:0 }});
+      if(type === 'promo') await updateDoc(ref, { promo: { other:0, tryouts:0, bootcamps:0, minutes:0 }});
+      if(type === 'career') await updateDoc(ref, { totalEvents: 0, totalMinutes: 0 });
     };
 
-    document.getElementById("addTypeBtn").onclick = async () => {
-      const name = document.getElementById("newTypeName").value.trim();
-      if (name) await addDoc(collection(db, "event_types"), { name });
+    window.fireUser = async (uid) => {
+      if(confirm("PERMANENTLY DELETE THIS ACCOUNT?")) await deleteDoc(doc(db, "users", uid));
     };
 
-    function loadEventTypes() {
-      onSnapshot(collection(db, "event_types"), (snap) => {
-        const list = document.getElementById("typeList");
-        list.innerHTML = "";
-        snap.forEach(d => {
-          const div = document.createElement("div");
-          div.innerHTML = `• ${d.data().name} <button style="color:red; background:none; border:none; cursor:pointer;" onclick="window.delType('${d.id}')">[X]</button>`;
-          list.appendChild(div);
-        });
-      });
-    }
-
-    window.delType = async (id) => { if(confirm("Delete type?")) await deleteDoc(doc(db, "event_types", id)); };
-
-    function loadPendingLogs() {
-      onSnapshot(collection(db, "event_pending"), (snap) => {
-        const queue = document.getElementById("logQueue");
-        queue.innerHTML = snap.empty ? "No pending logs." : "";
-        snap.forEach(d => {
-          const data = d.data();
-          const card = document.createElement("div");
-          card.className = "card";
-          card.innerHTML = `
-            <strong>Type:</strong> ${data.type}<br><strong>Host:</strong> ${data.hostEmail}<br>
-            <button class="view-btn" onclick="window.viewProof('${d.id}', 'event_pending')">Proof</button>
-            <button class="approve-btn" onclick="window.processLog('${d.id}', true)">Approve</button>
-            <button class="deny-btn" onclick="window.processLog('${d.id}', false)">Deny</button>
-          `;
-          queue.appendChild(card);
-        });
-      });
-    }
-
-    function loadPendingMinutes() {
-      onSnapshot(collection(db, "minutes_pending"), (snap) => {
-        const queue = document.getElementById("minutesQueue");
-        queue.innerHTML = snap.empty ? "No pending minutes." : "";
-        snap.forEach(d => {
-          const data = d.data();
-          const card = document.createElement("div");
-          card.className = "card";
-          card.innerHTML = `<strong>Mins:</strong> ${data.minutes}<br><strong>User:</strong> ${data.hostEmail}<br>
-            <button class="approve-btn" onclick="window.processMinutes('${d.id}', true)">Approve</button>
-            <button class="deny-btn" onclick="window.processMinutes('${d.id}', false)">Deny</button>`;
-          queue.appendChild(card);
-        });
-      });
-    }
-
+    // Approval Logics
     window.processLog = async (logId, approved) => {
-      if(!confirm("Confirm?")) return;
       const logRef = doc(db, "event_pending", logId);
       const snap = await getDoc(logRef);
-      if(!snap.exists()) return;
-      const data = snap.data();
-
-      if(approved) {
-        const typeStr = data.type.toLowerCase();
-        let field = "other";
-        if (typeStr.includes("tryout")) field = "tryouts";
-        else if (typeStr.includes("bootcamp")) field = "bootcamps";
-
-        const batch = writeBatch(db);
-        let emails = [data.hostEmail, ...(data.coHosts || []), ...(data.supervisors || [])];
-        emails = [...new Set(emails.filter(e => e && e !== "None"))];
-
-        for (const email of emails) {
-          const uSnap = await getDocs(query(collection(db, "users"), where("email", "==", email)));
-          if (!uSnap.empty) {
-            batch.update(uSnap.docs[0].ref, {
-              totalEvents: increment(1),
-              [`quota.${field}`]: increment(1),
-              [`promo.${field}`]: increment(1)
-            });
-          }
+      if(approved && snap.exists()) {
+        const data = snap.data();
+        const field = data.type.toLowerCase().includes("tryout") ? "tryouts" : data.type.toLowerCase().includes("bootcamp") ? "bootcamps" : "other";
+        const uSnap = await getDocs(query(collection(db, "users"), where("email", "==", data.hostEmail)));
+        if(!uSnap.empty) {
+          await updateDoc(uSnap.docs[0].ref, {
+            totalEvents: increment(1),
+            [`quota.${field}`]: increment(1),
+            [`promo.${field}`]: increment(1)
+          });
         }
-        batch.set(doc(collection(db, "event_history")), { ...data, approvedAt: new Date() });
-        batch.delete(logRef);
-        await batch.commit();
-      } else { await deleteDoc(logRef); }
-      alert("Done");
+        await setDoc(doc(collection(db, "event_history")), { ...data, approvedAt: new Date() });
+      }
+      await deleteDoc(logRef);
     };
 
     window.processMinutes = async (logId, approved) => {
@@ -282,18 +198,41 @@
             "promo.minutes": increment(data.minutes)
           });
         }
-        await setDoc(doc(collection(db, "event_history")), { ...data, approvedAt: new Date() });
-        await deleteDoc(logRef);
-      } else { await deleteDoc(logRef); }
-      alert("Done");
+      }
+      await deleteDoc(logRef);
     };
 
-    window.viewProof = async (logId, coll) => {
-      const chunks = await getDocs(query(collection(db, `${coll}/${logId}/chunks`), orderBy("index")));
-      let b64 = "";
-      chunks.forEach(c => b64 += c.data().data);
-      window.open("").document.write(`<img src="data:image/png;base64,${b64}" style="width:100%">`);
-    };
+    function loadPendingLogs() {
+      onSnapshot(collection(db, "event_pending"), (snap) => {
+        const q = document.getElementById("logQueue");
+        q.innerHTML = snap.empty ? "No pending events." : "<h3>Events</h3>";
+        snap.forEach(d => {
+          const data = d.data();
+          const card = document.createElement("div");
+          card.className = "card";
+          card.innerHTML = `${data.type} - ${data.hostEmail} <br>
+            <button class="approve-btn" onclick="window.processLog('${d.id}', true)">Approve</button>
+            <button class="deny-btn" onclick="window.processLog('${d.id}', false)">Deny</button>`;
+          q.appendChild(card);
+        });
+      });
+    }
+
+    function loadPendingMinutes() {
+      onSnapshot(collection(db, "minutes_pending"), (snap) => {
+        const q = document.getElementById("minutesQueue");
+        q.innerHTML = snap.empty ? "" : "<h3>Minutes</h3>";
+        snap.forEach(d => {
+          const data = d.data();
+          const card = document.createElement("div");
+          card.className = "card";
+          card.innerHTML = `${data.minutes} Mins - ${data.hostEmail} <br>
+            <button class="approve-btn" onclick="window.processMinutes('${d.id}', true)">Approve</button>
+            <button class="deny-btn" onclick="window.processMinutes('${d.id}', false)">Deny</button>`;
+          q.appendChild(card);
+        });
+      });
+    }
   </script>
 </body>
 </html>

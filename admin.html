@@ -37,6 +37,15 @@
     .stats-block { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; margin: 8px 0; padding: 8px; background: rgba(0,0,0,0.2); border-radius: 4px; }
 
     #typeList div { background: rgba(255,255,255,0.03); padding: 5px; margin-bottom: 3px; border-radius: 3px; display: flex; justify-content: space-between; }
+
+    .history-container { grid-column: 1 / span 2; margin-top: 20px; }
+    .history-table-wrapper { overflow-x: auto; background: rgba(0,0,0,0.3); border-radius: 8px; border: 1px solid rgba(226, 177, 60, 0.2); }
+    table { width: 100%; border-collapse: collapse; font-size: 12px; text-align: left; }
+    th { background: rgba(226, 177, 60, 0.1); color: #e2b13c; padding: 12px; text-transform: uppercase; letter-spacing: 1px; }
+    td { padding: 10px 12px; border-bottom: 1px solid rgba(255,255,255,0.05); }
+    .status-badge { padding: 2px 6px; border-radius: 3px; font-size: 10px; font-weight: bold; text-transform: uppercase; }
+    .badge-approved { background: #28a745; color: white; }
+    .search-input { margin-bottom: 10px; width: 300px; float: right; padding: 8px; font-size: 12px; }
   </style>
 </head>
 <body>
@@ -98,6 +107,28 @@
         <div id="minutesQueue" class="log-queue" style="margin-top:15px; border-top: 1px solid rgba(255,255,255,0.1); padding-top: 10px;"></div>
       </div>
     </div>
+    <div class="admin-container history-container">
+      <h2>
+        Event & Minutes History 
+        <input type="text" id="historySearch" class="search-input" placeholder="Search by email...">
+      </h2>
+      <div class="history-table-wrapper">
+        <table>
+          <thead>
+            <tr>
+              <th>Date Approved</th>
+              <th>Personnel</th>
+              <th>Type / Category</th>
+              <th>Details</th>
+              <th>Status</th>
+            </tr>
+          </thead>
+          <tbody id="historyTableBody">
+            <tr><td colspan="5" style="text-align:center;">Loading history...</td></tr>
+          </tbody>
+        </table>
+      </div>
+    </div>
   </div>
 
   <script type="module">
@@ -140,6 +171,7 @@
       loadEventTypes();
       loadPendingLogs();
       loadPendingMinutes();
+      loadHistory();
     });
 
     function initDropdowns() {
@@ -365,6 +397,63 @@
             </div>`;
           q.appendChild(card);
         });
+      });
+    }
+
+    let historyCache = []; // Global variable to store history locally
+
+    function loadHistory() {
+      const searchInput = document.getElementById("historySearch");
+      
+      // Real-time listener updates the cache and the table
+      onSnapshot(query(collection(db, "event_history"), orderBy("approvedAt", "desc")), (snap) => {
+        historyCache = snap.docs;
+        renderHistoryTable(historyCache, searchInput.value.toLowerCase());
+      });
+
+      // Search now filters the local cache (zero extra database costs)
+      searchInput.oninput = () => {
+        renderHistoryTable(historyCache, searchInput.value.toLowerCase());
+      };
+    }
+
+    function renderHistoryTable(docs, filter = "") {
+      const tbody = document.getElementById("historyTableBody");
+      tbody.innerHTML = "";
+
+      const filteredDocs = docs.filter(d => {
+        const data = d.data();
+        return data.hostEmail?.toLowerCase().includes(filter) || 
+               data.type?.toLowerCase().includes(filter);
+      });
+
+      if (filteredDocs.length === 0) {
+        tbody.innerHTML = `<tr><td colspan="5" style="text-align:center;">No history records found.</td></tr>`;
+        return;
+      }
+
+      filteredDocs.forEach(d => {
+        const data = d.data();
+        const date = data.approvedAt?.toDate().toLocaleDateString() || "N/A";
+        const time = data.approvedAt?.toDate().toLocaleTimeString([], {hour: '2-digit', minute:'2-digit'}) || "";
+        
+        const displayType = data.type || "Minutes Log";
+        const detail = data.minutes ? `${data.minutes} Minutes` : (data.logCategory || "Event");
+
+        // Only show "View Proof" button if it's an event (minutes logs usually don't have b64 chunks)
+        const proofBtn = (!data.minutes) 
+          ? `<button class="view-btn" style="padding: 2px 5px; font-size: 10px;" onclick="window.viewProof('${d.id}', 'event_history')">View</button>` 
+          : "";
+
+        const tr = document.createElement("tr");
+        tr.innerHTML = `
+          <td>${date} <span style="color:#718096; font-size:10px;">${time}</span></td>
+          <td style="font-family: monospace;">${data.hostEmail}</td>
+          <td>${displayType}</td>
+          <td>${detail} ${proofBtn}</td>
+          <td><span class="status-badge badge-approved">${data.status || 'Approved'}</span></td>
+        `;
+        tbody.appendChild(tr);
       });
     }
 

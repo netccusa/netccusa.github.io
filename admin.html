@@ -33,6 +33,9 @@
     .req-grid input { padding: 5px; font-size: 11px; }
     label { font-size: 10px; color: #718096; text-transform: uppercase; }
     
+    .role-select-mini { width: auto; padding: 2px; font-size: 11px; margin-top: 5px; background: #001226; border-color: #e2b13c; }
+    .stats-block { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; margin: 8px 0; padding: 8px; background: rgba(0,0,0,0.2); border-radius: 4px; }
+
     #typeList div { background: rgba(255,255,255,0.03); padding: 5px; margin-bottom: 3px; border-radius: 3px; display: flex; justify-content: space-between; }
   </style>
 </head>
@@ -41,11 +44,11 @@
 
   <div class="admin-grid">
     <div>
-      <div class="admin-container" style="border-top-color: #38b2ac;">
-        <h2 style="color: #38b2ac;">Authorize Access</h2>
+      <div class="admin-container" style="border-top-color: #e2b13c;">
+        <h2 style="color: #e2b13c;">Authorize Access</h2>
         <input type="email" id="inviteEmail" placeholder="Email Address">
         <input type="number" id="inviteRobloxId" placeholder="Roblox ID">
-        <button class="action-btn" id="sendInviteBtn" style="background: #38b2ac;">Authorize Personnel</button>
+        <button class="action-btn" id="sendInviteBtn" style="background: #e2b13c;">Authorize Personnel</button>
       </div>
 
       <div class="admin-container">
@@ -77,8 +80,8 @@
         <button class="action-btn" id="savePromoBtn" style="margin-top:10px">Save Promotion Req</button>
       </div>
 
-      <div class="admin-container" style="border-top-color: #38b2ac;">
-        <h2 style="color: #38b2ac;">Weekly Quota Requirements</h2>
+      <div class="admin-container" style="border-top-color: #e2b13c;">
+        <h2 style="color: #e2b13c;">Weekly Quota Requirements</h2>
         <select id="quotaRankSelect"></select>
         <div class="req-grid">
           <div><label>Tryouts</label><input type="number" id="qReqTry" value="0"></div>
@@ -86,7 +89,7 @@
           <div><label>Other</label><input type="number" id="qReqOther" value="0"></div>
           <div><label>Mins</label><input type="number" id="qReqMin" value="0"></div>
         </div>
-        <button class="action-btn" id="saveQuotaBtn" style="margin-top:10px; background: #38b2ac;">Save Weekly Quota</button>
+        <button class="action-btn" id="saveQuotaBtn" style="margin-top:10px; background: #e2b13c;">Save Weekly Quota</button>
       </div>
 
       <div class="admin-container">
@@ -119,14 +122,18 @@
       "Director", "Headquarters", "SECNAV", "Commander in Chief", "Admin"
     ];
 
+    let currentAdminRankIndex = -1;
+
     onAuthStateChanged(auth, async (user) => {
       if (!user) return window.location.replace("index.html");
       const userSnap = await getDoc(doc(db, "users", user.uid));
       if (!userSnap.exists()) return window.location.replace("dashboard.html");
       
-      const myRank = userSnap.data()?.role?.toLowerCase() || "";
+      const myRole = userSnap.data()?.role || "";
+      currentAdminRankIndex = ranks.indexOf(myRole);
+
       const staff = ["hicom", "deputy director", "director", "headquarters", "secnav", "commander in chief", "admin"];
-      if (!staff.includes(myRank)) return window.location.replace("dashboard.html");
+      if (!staff.includes(myRole.toLowerCase())) return window.location.replace("dashboard.html");
 
       initDropdowns();
       loadUsers();
@@ -186,22 +193,52 @@
         list.innerHTML = "";
         snap.forEach(uDoc => {
           const u = uDoc.data();
+          const userRankIndex = ranks.indexOf(u.role);
+          const isSuperiorOrEqual = userRankIndex >= currentAdminRankIndex;
+
           const div = document.createElement("div");
           div.className = "card";
+          
+          let roleOptions = ranks.map((r, idx) => {
+            // Cannot promote anyone to a rank equal to or higher than admin's rank
+            const disabled = idx >= currentAdminRankIndex ? "disabled" : "";
+            const selected = r === u.role ? "selected" : "";
+            return `<option value="${r}" ${selected} ${disabled}>${r}</option>`;
+          }).join("");
+
           div.innerHTML = `
-            <strong>${u.email}</strong> [${u.role || 'User'}]<br>
-            <label>Weekly:</label> T:${u.quota?.tryouts || 0} B:${u.quota?.bootcamps || 0} O:${u.quota?.other || 0} M:${u.quota?.minutes || 0}<br>
+            <strong>${u.email}</strong> 
+            <select class="role-select-mini" onchange="window.changeRank('${uDoc.id}', this.value)" ${isSuperiorOrEqual ? 'disabled' : ''}>
+              ${roleOptions}
+            </select><br>
+            
+            <div class="stats-block">
+              <div>
+                <label>Weekly Quota</label><br>
+                T:${u.quota?.tryouts || 0} B:${u.quota?.bootcamps || 0} O:${u.quota?.other || 0} M:${u.quota?.minutes || 0}
+              </div>
+              <div>
+                <label>Career Stats</label><br>
+                Events: ${u.totalEvents || 0} | Mins: ${u.totalMinutes || 0}
+              </div>
+            </div>
+
             <div class="btn-row">
-              <button class="reset-btn" onclick="window.resetData('${uDoc.id}', 'quota')">Reset Quota</button>
-              <button class="reset-btn" onclick="window.resetData('${uDoc.id}', 'promo')">Reset Promo</button>
-              <button class="reset-btn" style="background:#4a5568" onclick="window.resetData('${uDoc.id}', 'career')">Clear Career</button>
-              <button class="fire-btn" onclick="window.fireUser('${uDoc.id}')">FIRE</button>
+              <button class="reset-btn" onclick="window.resetData('${uDoc.id}', 'quota')" ${isSuperiorOrEqual ? 'disabled' : ''}>Reset Quota</button>
+              <button class="reset-btn" onclick="window.resetData('${uDoc.id}', 'promo')" ${isSuperiorOrEqual ? 'disabled' : ''}>Reset Promo</button>
+              <button class="reset-btn" style="background:#4a5568" onclick="window.resetData('${uDoc.id}', 'career')" ${isSuperiorOrEqual ? 'disabled' : ''}>Clear Career</button>
+              <button class="fire-btn" onclick="window.fireUser('${uDoc.id}')" ${isSuperiorOrEqual ? 'disabled' : ''}>FIRE</button>
             </div>
           `;
           list.appendChild(div);
         });
       });
     }
+
+    window.changeRank = async (uid, newRank) => {
+      if(!confirm(`Promote/Demote user to ${newRank}?`)) return;
+      await updateDoc(doc(db, "users", uid), { role: newRank });
+    };
 
     window.resetData = async (uid, type) => {
       if(!confirm(`Reset ${type} data?`)) return;
@@ -253,7 +290,6 @@
         else if (typeStr.includes("bootcamp")) field = "bootcamps";
 
         const batch = writeBatch(db);
-        // Include host, co-hosts, and supervisors from old logic
         let emails = [data.hostEmail, ...(data.coHosts || []), ...(data.supervisors || [])];
         emails = [...new Set(emails.filter(e => e && e !== "None" && e !== "none"))];
 

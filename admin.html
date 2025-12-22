@@ -101,6 +101,11 @@
         <button class="action-btn" id="saveQuotaBtn" style="margin-top:10px; background: #e2b13c;">Save Weekly Quota</button>
       </div>
 
+      <div class="admin-container" style="border-top-color: #e2b13c;">
+        <h2 style="color: #e2b13c;">Personnel Reform List</h2>
+        <div id="reformList" class="user-list-container">Scanning for quota deficits...</div>
+      </div>
+
       <div class="admin-container">
         <h2>Awaiting Approval</h2>
         <div id="logQueue" class="log-queue">No pending events.</div>
@@ -171,6 +176,7 @@
       loadEventTypes();
       loadPendingLogs();
       loadPendingMinutes();
+      loadReformList();
       loadHistory();
     });
 
@@ -280,6 +286,61 @@
             </div>
           `;
           list.appendChild(div);
+        });
+      });
+    }
+
+    async function loadReformList() {
+      const reformListDiv = document.getElementById("reformList");
+
+      // 1. Listen for changes in the Quotas collection so we know the requirements
+      onSnapshot(collection(db, "quotas"), (quotaSnap) => {
+        const quotaMap = {};
+        quotaSnap.forEach(doc => { quotaMap[doc.id] = doc.data(); });
+
+        // 2. Listen for changes in Users
+        onSnapshot(collection(db, "users"), (userSnap) => {
+          reformListDiv.innerHTML = "";
+          let count = 0;
+
+          userSnap.forEach(uDoc => {
+            const u = uDoc.data();
+            const req = quotaMap[u.role];
+
+            // If no quota is set for this rank, they aren't in reform
+            if (!req) return;
+
+            // 3. Check for any deficit
+            const deficitTryouts = Math.max(0, (req.tryouts || 0) - (u.quota?.tryouts || 0));
+            const deficitBootcamps = Math.max(0, (req.bootcamps || 0) - (u.quota?.bootcamps || 0));
+            const deficitOther = Math.max(0, (req.other || 0) - (u.quota?.other || 0));
+            const deficitMins = Math.max(0, (req.minutes || 0) - (u.quota?.minutes || 0));
+
+            const isUnderQuota = deficitTryouts > 0 || deficitBootcamps > 0 || deficitOther > 0 || deficitMins > 0;
+
+            if (isUnderQuota) {
+              count++;
+              const card = document.createElement("div");
+              card.className = "card";
+              card.style.borderLeftColor = "#dc3545"; // Red border for reform
+              
+              card.innerHTML = `
+                <strong>${u.email}</strong> [${u.role}]<br>
+                <span style="color: #fc8181; font-size: 11px;">
+                  Missing: 
+                  ${deficitTryouts > 0 ? `T:${deficitTryouts} ` : ''}
+                  ${deficitBootcamps > 0 ? `B:${deficitBootcamps} ` : ''}
+                  ${deficitOther > 0 ? `O:${deficitOther} ` : ''}
+                  ${deficitMins > 0 ? `M:${deficitMins} ` : ''}
+                </span>
+              `;
+              reformListDiv.appendChild(card);
+            }
+          });
+
+          if (count === 0) {
+            reformListDiv.innerHTML = "All personnel have met 100% quota.";
+          }
         });
       });
     }

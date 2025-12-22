@@ -21,6 +21,8 @@
     .reset-btn { background: #6b46c1; color: white; border: none; padding: 3px 8px; cursor: pointer; font-size: 10px; margin-right: 4px; margin-top: 5px; border-radius: 3px; }
     .fire-btn { background: #e53e3e; color: white; border: none; padding: 3px 8px; cursor: pointer; font-size: 10px; margin-top: 5px; border-radius: 3px; }
     select.role-select { width: auto; padding: 2px; font-size: 11px; margin-left: 10px; background: #001226; }
+    .req-grid { display: grid; grid-template-columns: 1fr 1fr 1fr 1fr; gap: 5px; margin-top: 10px; }
+    .req-grid input { padding: 5px; font-size: 11px; }
   </style>
 </head>
 <body>
@@ -34,18 +36,33 @@
         <input type="number" id="inviteRobloxId" placeholder="Roblox ID">
         <button class="action-btn" id="sendInviteBtn">Authorize</button>
       </div>
+
       <div class="admin-container">
         <div style="display: flex; justify-content: space-between; align-items: center;">
             <h2>Personnel Management</h2>
-            <button class="reset-btn" id="resetAllWeeklyBtn" style="background: #e53e3e; padding: 5px 10px;">RESET ALL WEEKLY</button>
+            <button class="reset-btn" id="resetAllWeeklyBtn" style="background: #e53e3e; padding: 5px 10px;">RESET ALL QUOTA</button>
         </div>
         <div id="userList" class="user-list-container">Loading personnel...</div>
       </div>
     </div>
 
     <div>
+      <div class="admin-container" id="rankManager" style="display:none;">
+        <h2>Rank Requirements</h2>
+        <select id="reqRankSelect">
+          </select>
+        <div class="req-grid">
+          <div><label style="font-size:10px">Other</label><input type="number" id="reqOther" placeholder="0"></div>
+          <div><label style="font-size:10px">Tryouts</label><input type="number" id="reqTryouts" placeholder="0"></div>
+          <div><label style="font-size:10px">Bootcamps</label><input type="number" id="reqBootcamps" placeholder="0"></div>
+          <div><label style="font-size:10px">Minutes</label><input type="number" id="reqMins" placeholder="0"></div>
+        </div>
+        <button class="action-btn" id="saveReqBtn" style="margin-top:10px">Save Quota/Promo Requirements</button>
+      </div>
+
       <div class="admin-container" id="typeManager" style="display:none;">
         <h2>Event Type Management</h2>
+        <p style="font-size: 10px; color: #e2b13c;">Note: Mark names as "Tryout" or "Bootcamp" for progress tracking.</p>
         <input type="text" id="newTypeName" placeholder="e.g. Basic Combat Training">
         <button class="action-btn" id="addTypeBtn">Add Event Type</button>
         <div id="typeList" style="margin-top:10px; font-size:12px;"></div>
@@ -77,10 +94,17 @@
     const auth = getAuth(app);
     const db = getFirestore(app);
 
-    const roles = ["User", "HICOM", "Director", "Headquarters", "SECNAV", "Admin"];
+    const ranks = [
+      "Probationary Navy Instructor", "Junior Navy Instructor I", "Junior Navy Instructor II",
+      "Navy Instructor I", "Navy Instructor II", "Navy Instructor III", "Senior Navy Instructor",
+      "Head Navy Instructor I", "Head Navy Instructor II", "Deputy Chief Navy Instructor I",
+      "Deputy Chief Navy Instructor II", "Chief Navy Instructor", "HICOM", "Deputy Director",
+      "Director", "Headquarters", "SECNAV", "Commander in Chief", "Admin"
+    ];
+
     let currentUserUid = "";
-    let myRoleName = "User";
-    let myHierarchyIndex = 0;
+    let myRank = "Probationary Navy Instructor";
+    let myRankIndex = 0;
 
     onAuthStateChanged(auth, async (user) => {
       if (!user) return window.location.replace("index.html");
@@ -88,26 +112,54 @@
       const userSnap = await getDoc(doc(db, "users", user.uid));
       if (!userSnap.exists()) return window.location.replace("dashboard.html");
       const data = userSnap.data();
-      myRoleName = data?.role || "User";
-      myHierarchyIndex = roles.indexOf(myRoleName);
-      if (myHierarchyIndex < 1) return window.location.replace("dashboard.html");
-      if (myHierarchyIndex >= 2) document.getElementById("typeManager").style.display = "block";
-
+      myRank = data?.role || "Probationary Navy Instructor";
+      myRankIndex = ranks.indexOf(myRank);
+      
+      // Admin Access Levels (HICOM and above)
+      if (myRankIndex < ranks.indexOf("HICOM")) return window.location.replace("dashboard.html");
+      
+      document.getElementById("rankManager").style.display = "block";
+      document.getElementById("typeManager").style.display = "block";
+      
+      initRankDropdown();
       loadUsers();
       loadEventTypes();
       loadPendingLogs();
       loadPendingMinutes();
     });
 
+    function initRankDropdown() {
+        const sel = document.getElementById("reqRankSelect");
+        ranks.forEach(r => {
+            const opt = document.createElement("option");
+            opt.value = r; opt.textContent = r;
+            sel.appendChild(opt);
+        });
+    }
+
+    document.getElementById("saveReqBtn").onclick = async () => {
+        const rank = document.getElementById("reqRankSelect").value;
+        const data = {
+            other: parseInt(document.getElementById("reqOther").value) || 0,
+            tryouts: parseInt(document.getElementById("reqTryouts").value) || 0,
+            bootcamps: parseInt(document.getElementById("reqBootcamps").value) || 0,
+            minutes: parseInt(document.getElementById("reqMins").value) || 0
+        };
+        await setDoc(doc(db, "requirements", rank), data);
+        alert("Requirements saved for " + rank);
+    };
+
     document.getElementById("resetAllWeeklyBtn").onclick = async () => {
-        if (!confirm("CONFIRMATION: Reset WEEKLY events AND minutes for EVERYONE?")) return;
+        if (!confirm("RESET ALL QUOTA: This clears weekly Tryouts, Bootcamps, Other Events, and Minutes for EVERYONE. Proceed?")) return;
         const usersSnap = await getDocs(collection(db, "users"));
         const batch = writeBatch(db);
         usersSnap.forEach(uDoc => { 
-            batch.update(uDoc.ref, { weeklyEvents: 0, weeklyMinutes: 0 }); 
+            batch.update(uDoc.ref, { 
+                "quota.other": 0, "quota.tryouts": 0, "quota.bootcamps": 0, "quota.minutes": 0 
+            }); 
         });
         await batch.commit();
-        alert("All weekly counters reset.");
+        alert("All quota counters reset.");
     };
 
     async function loadUsers() {
@@ -116,32 +168,31 @@
         list.innerHTML = "";
         snap.forEach(uDoc => {
           const u = uDoc.data();
-          const targetRoleIndex = roles.indexOf(u.role || "User");
+          const targetRankIndex = ranks.indexOf(u.role || "Probationary Navy Instructor");
           const div = document.createElement("div");
           div.className = "card";
           const isMe = uDoc.id === currentUserUid;
-          const canManage = !isMe && myHierarchyIndex > targetRoleIndex;
+          const canManage = !isMe && myRankIndex > targetRankIndex;
 
-          let roleHTML = `Role: ${u.role}`;
+          let roleHTML = `Rank: ${u.role || 'Probationary Navy Instructor'}`;
           if (canManage) {
             roleHTML = `<select class="role-select" onchange="window.updateRole('${uDoc.id}', this.value, '${u.email}')">`;
-            roles.forEach((r, idx) => { if (idx < myHierarchyIndex) roleHTML += `<option value="${r}" ${u.role === r ? 'selected' : ''}>${r}</option>`; });
+            ranks.forEach((r, idx) => { if (idx < myRankIndex) roleHTML += `<option value="${r}" ${u.role === r ? 'selected' : ''}>${r}</option>`; });
             roleHTML += `</select>`;
           }
 
           div.innerHTML = `
             <strong>${u.email}</strong><br>
             ${roleHTML}<br>
-            <div style="margin-top:5px; color:#cbd5e0; line-height: 1.4;">
-                Events: W: ${u.weeklyEvents || 0} | P: ${u.promoEvents || 0} | C: ${u.totalEvents || 0}<br>
-                Minutes: W: ${u.weeklyMinutes || 0} | P: ${u.promoMinutes || 0} | C: ${u.totalMinutes || 0}
+            <div style="margin-top:5px; color:#cbd5e0; line-height: 1.4; font-size:11px;">
+                QUOTA (T/B/O/M): ${(u.quota?.tryouts || 0)} / ${(u.quota?.bootcamps || 0)} / ${(u.quota?.other || 0)} / ${(u.quota?.minutes || 0)}<br>
+                PROMO (T/B/O/M): ${(u.promo?.tryouts || 0)} / ${(u.promo?.bootcamps || 0)} / ${(u.promo?.other || 0)} / ${(u.promo?.minutes || 0)}
             </div>
             ${canManage ? `
                 <div style="margin-top:8px;">
-                    <button class="reset-btn" onclick="window.resetIndividual('${uDoc.id}', 'weekly', '${u.email}')">Reset Weekly</button>
+                    <button class="reset-btn" onclick="window.resetIndividual('${uDoc.id}', 'quota', '${u.email}')">Reset Quota</button>
                     <button class="reset-btn" onclick="window.resetIndividual('${uDoc.id}', 'promo', '${u.email}')">Reset Promo</button>
-                    <button class="reset-btn" onclick="window.resetIndividual('${uDoc.id}', 'career', '${u.email}')">Reset Career</button>
-                    <button class="fire-btn" onclick="window.fireUser('${uDoc.id}', '${u.email}')">FIRE USER</button>
+                    <button class="fire-btn" onclick="window.fireUser('${uDoc.id}', '${u.email}')">FIRE</button>
                 </div>
             ` : ''}
           `;
@@ -151,21 +202,24 @@
     }
 
     window.fireUser = async (uid, email) => {
-        if (!confirm(`FINAL WARNING: Are you firing ${email}? This will delete their portal account and all associated data.`)) return;
+        if (!confirm(`FIRE ${email}? This deletes their account.`)) return;
         await deleteDoc(doc(db, "users", uid));
-        alert(`${email} has been removed from the portal.`);
     };
 
     window.updateRole = async (uid, newRole, email) => {
-        if (confirm(`Change ${email}'s role to ${newRole}?`)) await updateDoc(doc(db, "users", uid), { role: newRole });
+        if (confirm(`Promote/Demote ${email} to ${newRole}?`)) await updateDoc(doc(db, "users", uid), { role: newRole });
     };
 
     window.resetIndividual = async (uid, type, email) => {
-        if (!confirm(`Reset ALL ${type} stats (Events & Minutes) for ${email}?`)) return;
+        if (!confirm(`Reset ALL ${type} progress for ${email}?`)) return;
         const updates = {};
-        if (type === 'weekly') { updates.weeklyEvents = 0; updates.weeklyMinutes = 0; }
-        if (type === 'promo') { updates.promoEvents = 0; updates.promoMinutes = 0; }
-        if (type === 'career') { updates.totalEvents = 0; updates.totalMinutes = 0; }
+        if (type === 'quota') {
+            updates["quota.other"] = 0; updates["quota.tryouts"] = 0; 
+            updates["quota.bootcamps"] = 0; updates["quota.minutes"] = 0;
+        } else if (type === 'promo') {
+            updates["promo.other"] = 0; updates["promo.tryouts"] = 0; 
+            updates["promo.bootcamps"] = 0; updates["promo.minutes"] = 0;
+        }
         await updateDoc(doc(db, "users", uid), updates);
     };
 
@@ -254,14 +308,20 @@
           let participants = [data.hostEmail, ...(data.coHosts || []), ...(data.supervisors || [])];
           participants = [...new Set(participants.filter(e => e && e !== "None"))];
 
+          const eventType = data.type.toLowerCase();
+          let field = "other";
+          if (eventType.includes("tryout")) field = "tryouts";
+          if (eventType.includes("bootcamp")) field = "bootcamps";
+
           for (const email of participants) {
             const q = query(collection(db, "users"), where("email", "==", email));
             const uSnap = await getDocs(q);
             if (!uSnap.empty) {
-                batch.update(uSnap.docs[0].ref, { 
-                    totalEvents: increment(1), 
-                    promoEvents: increment(1), 
-                    weeklyEvents: increment(1) 
+                const uRef = uSnap.docs[0].ref;
+                batch.update(uRef, { 
+                    totalEvents: increment(1),
+                    [`promo.${field}`]: increment(1),
+                    [`quota.${field}`]: increment(1)
                 });
             }
           }
@@ -289,8 +349,8 @@
           if (!uSnap.empty) {
               batch.update(uSnap.docs[0].ref, { 
                   totalMinutes: increment(data.minutes),
-                  promoMinutes: increment(data.minutes),
-                  weeklyMinutes: increment(data.minutes)
+                  ["promo.minutes"]: increment(data.minutes),
+                  ["quota.minutes"]: increment(data.minutes)
               });
           }
           

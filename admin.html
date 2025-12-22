@@ -188,9 +188,26 @@
     document.getElementById("sendInviteBtn").onclick = async () => {
       const email = document.getElementById("inviteEmail").value.trim().toLowerCase();
       const rid = document.getElementById("inviteRobloxId").value;
+      
       if (!email || !rid) return alert("Fill all fields");
-      await setDoc(doc(db, "authorized_emails", email), { robloxId: rid, authorizedAt: new Date() });
-      alert("Authorized: " + email);
+
+      try {
+        // We use the email as the Document ID to prevent duplicate invites for one person
+        await setDoc(doc(db, "pending_invites", email), {
+          robloxUserId: rid,
+          invitedAt: new Date(), // Firebase Timestamp
+          invitedBy: auth.currentUser.email // Tracking who sent the invite
+        });
+        
+        alert("Personnel Authorized in pending_invites: " + email);
+        
+        // Clear inputs
+        document.getElementById("inviteEmail").value = "";
+        document.getElementById("inviteRobloxId").value = "";
+      } catch (error) {
+        console.error("Authorization Error:", error);
+        alert("Error: " + error.message);
+      }
     };
 
     document.getElementById("savePromoBtn").onclick = () => saveReq("requirements", "promoRankSelect", "pReq");

@@ -400,18 +400,18 @@
       });
     }
 
-    let historyCache = []; // Global variable to store history locally
+    let historyCache = []; // Local storage for history to save on database costs
 
     function loadHistory() {
       const searchInput = document.getElementById("historySearch");
       
-      // Real-time listener updates the cache and the table
+      // Real-time listener for the history collection
       onSnapshot(query(collection(db, "event_history"), orderBy("approvedAt", "desc")), (snap) => {
         historyCache = snap.docs;
         renderHistoryTable(historyCache, searchInput.value.toLowerCase());
       });
 
-      // Search now filters the local cache (zero extra database costs)
+      // Search filters the local cache instead of re-querying the database
       searchInput.oninput = () => {
         renderHistoryTable(historyCache, searchInput.value.toLowerCase());
       };
@@ -424,7 +424,7 @@
       const filteredDocs = docs.filter(d => {
         const data = d.data();
         return data.hostEmail?.toLowerCase().includes(filter) || 
-               data.type?.toLowerCase().includes(filter);
+               (data.type && data.type.toLowerCase().includes(filter));
       });
 
       if (filteredDocs.length === 0) {
@@ -434,23 +434,20 @@
 
       filteredDocs.forEach(d => {
         const data = d.data();
+        // Convert Firebase timestamp to readable string
         const date = data.approvedAt?.toDate().toLocaleDateString() || "N/A";
         const time = data.approvedAt?.toDate().toLocaleTimeString([], {hour: '2-digit', minute:'2-digit'}) || "";
         
+        // Display Logic
         const displayType = data.type || "Minutes Log";
         const detail = data.minutes ? `${data.minutes} Minutes` : (data.logCategory || "Event");
-
-        // Only show "View Proof" button if it's an event (minutes logs usually don't have b64 chunks)
-        const proofBtn = (!data.minutes) 
-          ? `<button class="view-btn" style="padding: 2px 5px; font-size: 10px;" onclick="window.viewProof('${d.id}', 'event_history')">View</button>` 
-          : "";
 
         const tr = document.createElement("tr");
         tr.innerHTML = `
           <td>${date} <span style="color:#718096; font-size:10px;">${time}</span></td>
           <td style="font-family: monospace;">${data.hostEmail}</td>
           <td>${displayType}</td>
-          <td>${detail} ${proofBtn}</td>
+          <td>${detail}</td>
           <td><span class="status-badge badge-approved">${data.status || 'Approved'}</span></td>
         `;
         tbody.appendChild(tr);

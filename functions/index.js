@@ -3,7 +3,7 @@ const logger = require("firebase-functions/logger");
 const fetch = require("node-fetch");
 
 // PASTE YOUR ACTUAL WEBHOOK URL HERE
-const webhookURL = "https://discord.com/api/webhooks/1452806038867935272/5GO9x0wEswGuo93QEi_QuIgPHeJiycG4pMl8Isrx1KJAbd83BJZ-cmqO2x0x5VXW0zu7";
+const webhookURL = "YOUR_DISCORD_WEBHOOK_URL_HERE";
 
 // 1. TRIGGER: When a log is Approved
 // Your admin.html saves approved logs to "event_history"

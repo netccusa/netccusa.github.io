@@ -345,40 +345,6 @@
       });
     }
 
-    async function sendDiscordNotification(status, data, category) {
-      const webhookURL = "https://discord.com/api/webhooks/1452806038867935272/5GO9x0wEswGuo93QEi_QulgPHeJiycG4pMl8Isrx1KJAbd83BJZ-cmqO2x0x5VXW0zu7"; // Replace this
-
-      const color = status === "Approved" ? 0x28a745 : 0xdc3545; // Green or Red
-      const title = `${category} ${status.toUpperCase()}`;
-      
-      // Determine details based on log type
-      let description = "";
-      if (data.type) description += `**Event:** ${data.type}\n`;
-      if (data.minutes) description += `**Minutes:** ${data.minutes}\n`;
-      description += `**Personnel:** ${data.hostEmail}\n`;
-      description += `**Processed By:** ${auth.currentUser.email}`;
-
-      const payload = {
-          embeds: [{
-              title: title,
-              description: description,
-              color: color,
-              timestamp: new Date().toISOString(),
-              footer: { text: "NETC Portal Logs" }
-          }]
-      };
-
-      try {
-          await fetch(webhookURL, {
-              method: 'POST',
-              headers: { 'Content-Type': 'application/json' },
-              body: JSON.stringify(payload)
-          });
-      } catch (err) {
-          console.error("Discord Webhook Error:", err);
-      }
-    }
-
     window.changeRank = async (uid, newRank) => {
       if(!confirm(`Promote/Demote user to ${newRank}?`)) return;
       await updateDoc(doc(db, "users", uid), { role: newRank });
@@ -450,10 +416,8 @@
         batch.set(doc(collection(db, "event_history")), { ...data, approvedAt: new Date(), status: "Approved" });
         batch.delete(logRef);
         await batch.commit();
-        sendDiscordNotification("Approved", data, "Event Log");
       } else {
         await deleteDoc(logRef);
-        sendDiscordNotification("Denied", data, "Event Log");
       }
     };
 
@@ -471,9 +435,6 @@
           });
         }
         await setDoc(doc(collection(db, "event_history")), { ...data, approvedAt: new Date(), status: "Approved" });
-        sendDiscordNotification("Approved", data, "Minutes Log");
-      } else {
-        sendDiscordNotification("Denied", data, "Minutes Log");
       }
       await deleteDoc(logRef);
     };

@@ -7,5 +7,5 @@
         "firebase-functions": "^4.0.0",
         "node-fetch": "^2.6.7"
     },
-    "engines": { "node" : "18" }
+    "engines": { "node" : "22" }
 }

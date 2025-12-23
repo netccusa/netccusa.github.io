@@ -1,32 +1,68 @@
-/**
- * Import function triggers from their respective submodules:
- *
- * const {onCall} = require("firebase-functions/v2/https");
- * const {onDocumentWritten} = require("firebase-functions/v2/firestore");
- *
- * See a full list of supported triggers at https://firebase.google.com/docs/functions
- */
-
-const {setGlobalOptions} = require("firebase-functions");
-const {onRequest} = require("firebase-functions/https");
+const { onDocumentCreated, onDocumentDeleted } = require("firebase-functions/v2/firestore");
 const logger = require("firebase-functions/logger");
+const fetch = require("node-fetch");
 
-// For cost control, you can set the maximum number of containers that can be
-// running at the same time. This helps mitigate the impact of unexpected
-// traffic spikes by instead downgrading performance. This limit is a
-// per-function limit. You can override the limit for each function using the
-// `maxInstances` option in the function's options, e.g.
-// `onRequest({ maxInstances: 5 }, (req, res) => { ... })`.
-// NOTE: setGlobalOptions does not apply to functions using the v1 API. V1
-// functions should each use functions.runWith({ maxInstances: 10 }) instead.
-// In the v1 API, each function can only serve one request per container, so
-// this will be the maximum concurrent request count.
-setGlobalOptions({ maxInstances: 10 });
+// PASTE YOUR ACTUAL WEBHOOK URL HERE
+const webhookURL = "YOUR_DISCORD_WEBHOOK_URL_HERE";
 
-// Create and deploy your first functions
-// https://firebase.google.com/docs/functions/get-started
+// 1. TRIGGER: When a log is Approved
+// Your admin.html saves approved logs to "event_history"
+exports.notifyApproved = onDocumentCreated("event_history/{logId}", async (event) => {
+    const data = event.data.data();
+    
+    const payload = {
+        embeds: [{
+            title: "✅ LOG APPROVED",
+            color: 2665893,
+            fields: [
+                { name: "Personnel", value: data.hostEmail || "Unknown", inline: true },
+                { name: "Type", value: data.type || (data.minutes ? "Minutes" : "Event"), inline: true },
+                { name: "Details", value: data.minutes ? `${data.minutes} Mins` : "Event Log", inline: true }
+            ],
+            footer: { text: `Processed by: ${data.approvedBy || "Admin"}` },
+            timestamp: new Date().toISOString()
+        }]
+    };
 
-// exports.helloWorld = onRequest((request, response) => {
-//   logger.info("Hello logs!", {structuredData: true});
-//   response.send("Hello from Firebase!");
-// });
+    await sendToDiscord(payload);
+});
+
+// 2. TRIGGER: When an Event Log is Denied
+exports.notifyEventDenied = onDocumentDeleted("event_pending/{logId}", async (event) => {
+    const data = event.data.data();
+    const payload = {
+        embeds: [{
+            title: "❌ EVENT LOG DENIED",
+            color: 14431557,
+            description: `An event log from **${data.hostEmail}** was rejected.`,
+            timestamp: new Date().toISOString()
+        }]
+    };
+    await sendToDiscord(payload);
+});
+
+// 3. TRIGGER: When a Minutes Log is Denied
+exports.notifyMinutesDenied = onDocumentDeleted("minutes_pending/{logId}", async (event) => {
+    const data = event.data.data();
+    const payload = {
+        embeds: [{
+            title: "❌ MINUTES LOG DENIED",
+            color: 14431557,
+            description: `A minutes log for **${data.minutes} mins** from **${data.hostEmail}** was rejected.`,
+            timestamp: new Date().toISOString()
+        }]
+    };
+    await sendToDiscord(payload);
+});
+
+async function sendToDiscord(payload) {
+    try {
+        await fetch(webhookURL, {
+            method: "POST",
+            headers: { "Content-Type": "application/json" },
+            body: JSON.stringify(payload)
+        });
+    } catch (error) {
+        logger.error("Discord Webhook Error", error);
+    }
+}

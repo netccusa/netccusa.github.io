@@ -345,7 +345,6 @@
       });
     }
 
-
     window.changeRank = async (uid, newRank) => {
       if(!confirm(`Promote/Demote user to ${newRank}?`)) return;
       await updateDoc(doc(db, "users", uid), { role: newRank });

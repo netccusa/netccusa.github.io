@@ -4,6 +4,10 @@
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title>Login | Naval Education and Training Command</title>
+  <link rel="manifest" href="manifest.json">
+  <meta name="theme-color" content="#001226">
+  <link rel="apple-touch-icon" href="netc-192.png">
+  <meta name="apple-mobile-web-app-capable" content="yes">
   <style>
     /* Animation Keyframes */
     @keyframes fadeIn {
@@ -159,6 +163,28 @@
   </script>
   
   <script type="module" src="auth.js"></script>
+  <script>
+    if ('serviceWorker' in navigator) {
+      navigator.serviceWorker.register('./sw.js');
+    }
+  </script>
+  <script>
+  // Check if it's an iOS device
+  const isIos = () => {
+    const userAgent = window.navigator.userAgent.toLowerCase();
+    return /iphone|ipad|ipod/.test(userAgent);
+  }
 
+  // Check if the app is already installed/running in standalone mode
+  const isInStandaloneMode = () => ('standalone' in window.navigator) && (window.navigator.standalone);
+
+  // Show the alert only to iOS users who haven't installed it yet
+  if (isIos() && !isInStandaloneMode()) {
+    // We wait 3 seconds after the page loads so we don't annoy them instantly
+    setTimeout(() => {
+      alert("To install this portal as an app on your iPhone: tap the 'Share' icon (square with arrow) and select 'Add to Home Screen'.");
+    }, 3000);
+  }
+  </script>
 </body>
 </html>

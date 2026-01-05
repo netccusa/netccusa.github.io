@@ -234,7 +234,7 @@
           e += (u.quota?.tryouts || 0) + (u.quota?.bootcamps || 0) + (u.quota?.other || 0);
           m += (u.quota?.minutes || 0);
           const score = (u.quota?.tryouts || 0) + (u.quota?.bootcamps || 0) + (u.quota?.other || 0);
-          usersList.push({ name: u.role, points: score });
+          usersList.push({ name: u.email || "Unknown User", points: score });
         });
         document.getElementById("gEvents").textContent = e;
         document.getElementById("gMins").textContent = m;
@@ -242,9 +242,11 @@
         const topFive = usersList.slice(0, 5);
         const leaderboardEl = document.getElementById("leaderboard");
         leaderboardEl.innerHTML = topFive.map((user, index) => `
-          <div style="display: flex; justify-content: space-between; padding: 5px 0; border-bottom: 1px solid rgba(255,255,255,0.05);">
-            <span>${index + 1}. ${user.name}</span>
-            <span style="color: #e2b13c; font-weight: bold;">${user.points} Events</span>
+          <div style="display: flex; justify-content: space-between; padding: 5px 0; border-bottom: 1px solid rgba(255,255,255,0.05); font-size: 12px;">
+            <span style="white-space: nowrap; overflow: hidden; text-overflow: ellipsis; max-width: 150px;">
+              ${index + 1}. ${user.name}
+            </span>
+            <span style="color: #e2b13c; font-weight: bold; flex-shrink: 0;">${user.points} Events</span>
           </div>
         `).join('');
       });

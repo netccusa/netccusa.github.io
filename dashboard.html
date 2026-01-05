@@ -142,6 +142,38 @@
       padding-top: 15px;
       /* Remove position: fixed and bottom: 15px */
     }
+
+    .strike-container {
+      display: flex;
+      justify-content: center;
+      gap: 10px;
+      margin: 15px 0;
+      padding: 10px;
+      background: rgba(220, 53, 69, 0.1);
+      border-radius: 6px;
+      border: 1px solid rgba(220, 53, 69, 0.2);
+    }
+    .strike-dot {
+      height: 15px;
+      width: 15px;
+      background-color: rgba(255, 255, 255, 0.1);
+      border-radius: 50%;
+      border: 1px solid rgba(255, 255, 255, 0.2);
+      transition: 0.3s;
+    }
+    .strike-active {
+      background-color: #ff4d4d;
+      box-shadow: 0 0 10px #ff4d4d;
+      border-color: #ff4d4d;
+    }
+    .strike-label {
+      font-size: 10px;
+      color: #fc8181;
+      text-transform: uppercase;
+      letter-spacing: 1px;
+      margin-bottom: 5px;
+      display: block;
+    }
   </style>
 </head>
 <body>
@@ -155,6 +187,15 @@
   <div class="dashboard-container">
     <h1>NETC Portal</h1>
     <div id="roleDisplay">Loading...</div>
+
+    <div id="strikeSection" style="display: none;">
+      <label class="strike-label">Active Disciplinary Strikes</label>
+      <div class="strike-container" id="strikeDots">
+        <div class="strike-dot"></div>
+        <div class="strike-dot"></div>
+        <div class="strike-dot"></div>
+      </div>
+    </div>
 
     <div class="stats-header">Career Statistics</div>
     <div class="stat-box-grid">
@@ -211,6 +252,16 @@
         if (!snap.exists()) return;
         const data = snap.data();
         const rank = data.role || "User";
+        const strikes = data.strikes || 0;
+        const strikeDotsCont = document.getElementById("strikeDots");
+        const strikeSection = document.getElementById("strikeSection");
+        strikeSection.style.display = "block";
+        strikeDotsCont.innerHTML = "";
+        for (let i = 0; i < 3; i++) {
+          const dot = document.createElement("div");
+          dot.className = `strike-dot ${i < strikes ? 'strike-active' : ''}`;
+          strikeDotsCont.appendChild(dot);
+        }
         document.getElementById("roleDisplay").textContent = rank;
         document.getElementById("cEvents").textContent = data.totalEvents || 0;
         document.getElementById("cMins").textContent = data.totalMinutes || 0;

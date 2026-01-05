@@ -214,7 +214,7 @@
         const pReq = pReqSnap.exists() ? pReqSnap.data() : { tryouts: 0, bootcamps: 0, other: 0, minutes: 0 };
 
         const quotaAvg = renderBars("quotaContainer", data.quota, qReq, data.quotaReduction || 0);
-        const promoAvg = renderBars("promoContainer", data.promo, pReq, true);
+        const promoAvg = renderBars("promoContainer", data.promo, pReq, 0);
 
         // Update the Total Progress Bar
         document.getElementById("qTotalBar").style.width = quotaAvg + "%";

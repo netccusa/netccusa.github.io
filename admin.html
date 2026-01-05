@@ -110,6 +110,8 @@
         <h2>Awaiting Approval</h2>
         <div id="logQueue" class="log-queue">No pending events.</div>
         <div id="minutesQueue" class="log-queue" style="margin-top:15px; border-top: 1px solid rgba(255,255,255,0.1); padding-top: 10px;"></div>
+        <div id="loaQueue" class="log-queue" style="margin-top:15px; border-top: 1px solid rgba(255,255,255,0.1); padding-top: 10px;">
+          </div>
       </div>
     </div>
     <div class="admin-container history-container">
@@ -178,6 +180,7 @@
       loadPendingMinutes();
       loadReformList();
       loadHistory();
+      loadPendingLOAs();
     });
 
     function initDropdowns() {
@@ -565,6 +568,61 @@
       chunks.forEach(c => b64 += c.data().data);
       const win = window.open("");
       win.document.write(`<html><body style="margin:0; background:#000;"><img src="data:image/png;base64,${b64}" style="width:100%"></body></html>`);
+    };
+
+    // Function to load LOA requests in the Admin Panel
+    function loadPendingLOAs() {
+      onSnapshot(collection(db, "loa_pending"), (snap) => {
+        const q = document.getElementById("loaQueue");
+        q.innerHTML = snap.empty ? "" : "<h3>Pending LOA Requests</h3>";
+        snap.forEach(d => {
+          const data = d.data();
+          const card = document.createElement("div");
+          card.className = "card";
+          card.style.borderLeftColor = "#6b46c1"; // Purple border for LOAs
+          card.innerHTML = `
+            <strong>LOA: ${data.reductionPercent}% Reduction</strong><br>
+            User: ${data.hostEmail}<br>
+            Reason: ${data.reason}<br>
+            Until: ${data.duration}<br>
+            <div class="btn-row">
+              <button class="approve-btn" onclick="window.processLOA('${d.id}', true)">Approve</button>
+              <button class="deny-btn" onclick="window.processLOA('${d.id}', false)">Deny</button>
+            </div>`;
+          q.appendChild(card);
+        });
+      });
+    }
+
+    // Global function to approve/deny LOA
+    window.processLOA = async (logId, approved) => {
+      const logRef = doc(db, "loa_pending", logId);
+      const snap = await getDoc(logRef);
+      
+      if (approved && snap.exists()) {
+        const data = snap.data();
+        // Find user by email
+        const uSnap = await getDocs(query(collection(db, "users"), where("email", "==", data.hostEmail.toLowerCase())));
+        
+        if (!uSnap.empty) {
+          // Update the user's reduction and reason automatically
+          await updateDoc(uSnap.docs[0].ref, {
+            quotaReduction: data.reductionPercent,
+            reductionReason: `LOA: ${data.reason} (${data.duration})`
+          });
+        }
+        
+        // Log to history
+        await addDoc(collection(db, "event_history"), {
+          hostEmail: data.hostEmail,
+          type: "LOA Approved",
+          logCategory: `${data.reductionPercent}% Reduction`,
+          approvedAt: new Date(),
+          status: "Approved"
+        });
+      }
+      
+      await deleteDoc(logRef);
     };
   </script>
 </body>

@@ -187,6 +187,10 @@
       <a href="minuteslogs.html" class="action-btn" style="background: #9f7aea; color: white;">Submit Minutes Log</a>
     </div>
 
+    <div class="stats-header">Top Performers (Weekly)</div>
+    <div id="leaderboard" style="text-align: left; font-size: 14px;">
+      </div>
+
     <button id="logoutBtn" class="logout-action-btn">Logout</button>
     <button id="resignBtn">Resign (Delete Account)</button>
     <div class="version-footer" id="appVersion"></div>
@@ -197,56 +201,53 @@
     import { getAuth, onAuthStateChanged, signOut, deleteUser } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-auth.js";
     import { getFirestore, doc, getDoc, onSnapshot, collection, deleteDoc } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-firestore.js";
     import firebaseConfig from './config.js';
-
     const app = initializeApp(firebaseConfig);
     const auth = getAuth(app);
     const db = getFirestore(app);
-
     onAuthStateChanged(auth, async (user) => {
       if (!user) return window.location.replace("index.html");
-
       onSnapshot(doc(db, "users", user.uid), async (snap) => {
         if (!snap.exists()) return;
         const data = snap.data();
         const rank = data.role || "User";
-        
         document.getElementById("roleDisplay").textContent = rank;
         document.getElementById("cEvents").textContent = data.totalEvents || 0;
         document.getElementById("cMins").textContent = data.totalMinutes || 0;
-
-        // Admin Access
         const staff = ["hicom", "deputy director", "director", "headquarters", "secnav", "commander in chief", "admin"];
         if (staff.includes(rank.toLowerCase())) document.getElementById("adminLink").style.display = "block";
-
-        // Requirements Fetching
         const qReqSnap = await getDoc(doc(db, "quotas", rank));
         const pReqSnap = await getDoc(doc(db, "requirements", rank));
-        
         const qReq = qReqSnap.exists() ? qReqSnap.data() : { tryouts: 0, bootcamps: 0, other: 0, minutes: 0 };
         const pReq = pReqSnap.exists() ? pReqSnap.data() : { tryouts: 0, bootcamps: 0, other: 0, minutes: 0 };
-
         const quotaAvg = renderBars("quotaContainer", data.quota, qReq, data.quotaReduction || 0);
         const promoAvg = renderBars("promoContainer", data.promo, pReq, 0);
-
-        // Update the Total Progress Bar
         document.getElementById("qTotalBar").style.width = quotaAvg + "%";
         document.getElementById("qTotalTxt").textContent = quotaAvg + "%";
         document.getElementById("pTotalBar").style.width = promoAvg + "%";
         document.getElementById("pTotalTxt").textContent = promoAvg + "%";
       });
-
-      // Global/Division Statistics
       onSnapshot(collection(db, "users"), (snap) => {
         let e = 0, m = 0;
+        let usersList = [];
         snap.forEach(d => {
           const u = d.data();
           e += (u.quota?.tryouts || 0) + (u.quota?.bootcamps || 0) + (u.quota?.other || 0);
           m += (u.quota?.minutes || 0);
+          const score = (u.quota?.tryouts || 0) + (u.quota?.bootcamps || 0) + (u.quota?.other || 0);
+          usersList.push({ name: u.role, points: score });
         });
         document.getElementById("gEvents").textContent = e;
         document.getElementById("gMins").textContent = m;
+        usersList.sort((a, b) => b.points - a.points);
+        const topFive = usersList.slice(0, 5);
+        const leaderboardEl = document.getElementById("leaderboard");
+        leaderboardEl.innerHTML = topFive.map((user, index) => `
+          <div style="display: flex; justify-content: space-between; padding: 5px 0; border-bottom: 1px solid rgba(255,255,255,0.05);">
+            <span>${index + 1}. ${user.name}</span>
+            <span style="color: #e2b13c; font-weight: bold;">${user.points} Events</span>
+          </div>
+        `).join('');
       });
-
       document.getElementById("resignBtn").onclick = async () => {
         if(confirm("Are you sure you want to resign? This deletes your account forever.")){
           try {
@@ -259,25 +260,16 @@
         }
       };
     });
-
     function renderBars(containerId, current, required, reductionPercent) {
       const cont = document.getElementById(containerId);
       cont.innerHTML = "";
       const fields = ["tryouts", "bootcamps", "other", "minutes"];
       let totalPerc = 0;
-
-      // Calculate the multiplier (e.g., 25% reduction means you do 75% of the work)
       const multiplier = (100 - reductionPercent) / 100;
-
       fields.forEach(f => {
         const cur = current?.[f] || 0;
         const baseReq = required?.[f] || 0;
-        
-        // Calculate the new required amount. 
-        // We use Math.ceil so that if a reduction results in 2.1, they still have to do 3.
         const reducedReq = Math.ceil(baseReq * multiplier);
-        
-        // Calculate percentage based on the NEW reduced requirement
         const perc = reducedReq <= 0 ? 100 : Math.min((cur / reducedReq) * 100, 100);
         totalPerc += perc;
 

@@ -255,7 +255,11 @@
         const strikes = data.strikes || 0;
         const strikeDotsCont = document.getElementById("strikeDots");
         const strikeSection = document.getElementById("strikeSection");
-        strikeSection.style.display = "block";
+        if(data.strikes && data.strikes > 0) {
+          strikeSection.style.display = "block";
+        } else {
+          strikeSection.style.display = "none";
+        }
         strikeDotsCont.innerHTML = "";
         for (let i = 0; i < 3; i++) {
           const dot = document.createElement("div");

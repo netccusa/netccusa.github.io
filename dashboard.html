@@ -213,7 +213,7 @@
         const qReq = qReqSnap.exists() ? qReqSnap.data() : { tryouts: 0, bootcamps: 0, other: 0, minutes: 0 };
         const pReq = pReqSnap.exists() ? pReqSnap.data() : { tryouts: 0, bootcamps: 0, other: 0, minutes: 0 };
 
-        const quotaAvg = renderBars("quotaContainer", data.quota, qReq, true);
+        const quotaAvg = renderBars("quotaContainer", data.quota, qReq, data.quotaReduction || 0);
         const promoAvg = renderBars("promoContainer", data.promo, pReq, true);
 
         // Update the Total Progress Bar
@@ -248,23 +248,38 @@
       };
     });
 
-    function renderBars(containerId, current, required, calculateAvg) {
+    function renderBars(containerId, current, required, reductionPercent) {
       const cont = document.getElementById(containerId);
       cont.innerHTML = "";
       const fields = ["tryouts", "bootcamps", "other", "minutes"];
       let totalPerc = 0;
 
+      // Calculate the multiplier (e.g., 25% reduction means you do 75% of the work)
+      const multiplier = (100 - reductionPercent) / 100;
+
       fields.forEach(f => {
         const cur = current?.[f] || 0;
-        const req = required?.[f] || 0;
-        const perc = req <= 0 ? 100 : Math.min((cur/req)*100, 100);
+        const baseReq = required?.[f] || 0;
+        
+        // Calculate the new required amount. 
+        // We use Math.ceil so that if a reduction results in 2.1, they still have to do 3.
+        const reducedReq = Math.ceil(baseReq * multiplier);
+        
+        // Calculate percentage based on the NEW reduced requirement
+        const perc = reducedReq <= 0 ? 100 : Math.min((cur / reducedReq) * 100, 100);
         totalPerc += perc;
 
         const colorClass = f === "minutes" ? "fill-mins" : "";
         
+        // Add a small badge if there is a reduction active on this bar
+        const reductionLabel = reductionPercent > 0 ? `<span style="color:#e2b13c; font-size:9px;">(-${reductionPercent}%)</span>` : "";
+
         cont.innerHTML += `
           <div class="progress-section">
-            <div class="progress-label"><span>${f}</span><span>${cur}/${req}</span></div>
+            <div class="progress-label">
+              <span>${f} ${reductionLabel}</span>
+              <span>${cur}/${reducedReq}</span>
+            </div>
             <div class="progress-bar-bg">
                 <div class="progress-fill ${colorClass}" style="width:${perc}%"></div>
             </div>

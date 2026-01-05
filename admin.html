@@ -250,17 +250,17 @@
           const u = uDoc.data();
           const userRankIndex = ranks.indexOf(u.role);
           const isSuperiorOrEqual = userRankIndex >= currentAdminRankIndex;
+          const reductionValue = u.quotaReduction || 0;
+          const reductionReason = u.reductionReason || "";
 
           const div = document.createElement("div");
           div.className = "card";
           
           let roleOptions = ranks.map((r, idx) => {
-            // Cannot promote anyone to a rank equal to or higher than admin's rank
             const disabled = idx >= currentAdminRankIndex ? "disabled" : "";
             const selected = r === u.role ? "selected" : "";
             return `<option value="${r}" ${selected} ${disabled}>${r}</option>`;
           }).join("");
-
           div.innerHTML = `
             <strong>${u.email}</strong> 
             <select class="role-select-mini" onchange="window.changeRank('${uDoc.id}', this.value)" ${isSuperiorOrEqual ? 'disabled' : ''}>
@@ -275,6 +275,15 @@
               <div>
                 <label>Career Stats</label><br>
                 Events: ${u.totalEvents || 0} | Mins: ${u.totalMinutes || 0}
+              </div>
+            </div>
+
+            <div style="margin: 10px 0; padding: 8px; background: rgba(226, 177, 60, 0.1); border-radius: 4px; font-size: 11px;">
+              <label style="color: #e2b13c;">Quota Reduction (%)</label>
+              <div style="display: flex; gap: 5px; margin-top: 5px;">
+                <input type="number" id="redVal-${uDoc.id}" value="${reductionValue}" style="width: 60px; padding: 4px;" placeholder="%">
+                <input type="text" id="redReason-${uDoc.id}" value="${reductionReason}" style="padding: 4px;" placeholder="Reason (e.g. LOA)">
+                <button class="approve-btn" style="padding: 4px 8px;" onclick="window.updateReduction('${uDoc.id}')">Save</button>
               </div>
             </div>
 
@@ -311,10 +320,14 @@
             if (!req) return;
 
             // 3. Check for any deficit
-            const deficitTryouts = Math.max(0, (req.tryouts || 0) - (u.quota?.tryouts || 0));
-            const deficitBootcamps = Math.max(0, (req.bootcamps || 0) - (u.quota?.bootcamps || 0));
-            const deficitOther = Math.max(0, (req.other || 0) - (u.quota?.other || 0));
-            const deficitMins = Math.max(0, (req.minutes || 0) - (u.quota?.minutes || 0));
+
+            const reduction = u.quotaReduction || 0;
+            const multiplier = (100 - reduction) / 100;
+
+            const deficitTryouts = Math.max(0, Math.ceil((req.tryouts || 0) * multiplier) - (u.quota?.tryouts || 0));
+            const deficitBootcamps = Math.max(0, Math.ceil((req.bootcamps || 0) * multiplier) - (u.quota?.bootcamps || 0));
+            const deficitOther = Math.max(0, Math.ceil((req.other || 0) * multiplier) - (u.quota?.other || 0));
+            const deficitMins = Math.max(0, Math.ceil((req.minutes || 0) * multiplier) - (u.quota?.minutes || 0));
 
             const isUnderQuota = deficitTryouts > 0 || deficitBootcamps > 0 || deficitOther > 0 || deficitMins > 0;
 
@@ -385,7 +398,20 @@
     }
     window.delType = async (id) => { if(confirm("Delete type?")) await deleteDoc(doc(db, "event_types", id)); };
 
-    // --- Approval Logic ---
+    window.updateReduction = async (uid) => {
+      const percent = parseInt(document.getElementById(`redVal-${uid}`).value) || 0;
+      const reason = document.getElementById(`redReason-${uid}`).value.trim();
+
+      try {
+        await updateDoc(doc(db, "users", uid), {
+          quotaReduction: percent,
+          reductionReason: reason
+        });
+        alert("Reduction updated successfully.");
+      } catch (e) {
+        alert("Error updating reduction: " + e.message);
+      }
+    };
 
     window.processLog = async (logId, approved) => {
       const logRef = doc(db, "event_pending", logId);

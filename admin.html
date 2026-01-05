@@ -46,6 +46,17 @@
     .status-badge { padding: 2px 6px; border-radius: 3px; font-size: 10px; font-weight: bold; text-transform: uppercase; }
     .badge-approved { background: #28a745; color: white; }
     .search-input { margin-bottom: 10px; width: 300px; float: right; padding: 8px; font-size: 12px; }
+
+    .strike-dot {
+      height: 10px;
+      width: 10px;
+      background-color: #4a5568;
+      border-radius: 50%;
+      display: inline-block;
+      margin-right: 4px;
+    }
+    .strike-active { background-color: #dc3545; box-shadow: 0 0 5px #dc3545; }
+    .strike-btn { background: #ed8936; color: white; border: none; padding: 4px 8px; cursor: pointer; border-radius: 3px; font-size: 11px; }
   </style>
 </head>
 <body>
@@ -255,6 +266,10 @@
           const isSuperiorOrEqual = userRankIndex >= currentAdminRankIndex;
           const reductionValue = u.quotaReduction || 0;
           const reductionReason = u.reductionReason || "";
+          const strikes = u.strikes || 0;
+          const strikeDots = Array(3).fill(0).map((_, i) => 
+            `<span class="strike-dot ${i < strikes ? 'strike-active' : ''}"></span>`
+          ).join('');
 
           const div = document.createElement("div");
           div.className = "card";
@@ -288,6 +303,19 @@
                 <input type="text" id="redReason-${uDoc.id}" value="${reductionReason}" style="padding: 4px;" placeholder="Reason (e.g. LOA)">
                 <button class="approve-btn" style="padding: 4px 8px;" onclick="window.updateReduction('${uDoc.id}')">Save</button>
               </div>
+            </div>
+
+            <div style="margin-top: 10px; padding: 8px; background: rgba(220, 53, 69, 0.1); border-radius: 4px;">
+                <div style="display: flex; justify-content: space-between; align-items: center;">
+                    <div>
+                        <label style="color: #fc8181;">Strikes (${strikes}/3)</label><br>
+                        ${strikeDots}
+                    </div>
+                    <div class="btn-row">
+                        <button class="strike-btn" onclick="window.addStrike('${uDoc.id}', '${u.email}', ${strikes})" ${isSuperiorOrEqual ? 'disabled' : ''}>+ Strike</button>
+                        <button class="view-btn" style="background: #4a5568; font-size: 10px;" onclick="window.resetStrikes('${uDoc.id}')" ${isSuperiorOrEqual ? 'disabled' : ''}>Clear</button>
+                    </div>
+                </div>
             </div>
 
             <div class="btn-row">
@@ -376,6 +404,59 @@
 
     window.fireUser = async (uid) => {
       if(confirm("PERMANENTLY DELETE THIS ACCOUNT?")) await deleteDoc(doc(db, "users", uid));
+    };
+
+    window.addStrike = async (uid, email, currentStrikes) => {
+        const reason = prompt(`Enter reason for striking ${email}:`);
+        if (!reason) return;
+
+        const newStrikeCount = currentStrikes + 1;
+
+        try {
+            await updateDoc(doc(db, "users", uid), {
+                strikes: increment(1),
+                strikeHistory: Array.isArray((await getDoc(doc(db, "users", uid))).data().strikeHistory) 
+                    ? increment(1) // Just a placeholder, better to use arrayUnion
+                    : [] 
+            });
+
+            // Use arrayUnion to log the reason
+            import { arrayUnion } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-firestore.js";
+            await updateDoc(doc(db, "users", uid), {
+                strikeHistory: arrayUnion({
+                    reason: reason,
+                    givenBy: auth.currentUser.email,
+                    date: new Date()
+                })
+            });
+
+            if (newStrikeCount >= 3) {
+                alert(`⚠️ CRITICAL: ${email} has reached ${newStrikeCount} strikes! Personnel should be exiled immediately.`);
+                
+                // Log to history for HICOM visibility
+                await addDoc(collection(db, "event_history"), {
+                    hostEmail: email,
+                    type: "TERMINATION REQUIRED",
+                    details: `Reached 3 strikes. Last reason: ${reason}`,
+                    approvedAt: new Date(),
+                    status: "URGENT"
+                });
+            } else {
+                alert(`Strike applied to ${email}. Total: ${newStrikeCount}`);
+            }
+        } catch (e) {
+            console.error("Strike Error:", e);
+            alert("Error applying strike.");
+        }
+    };
+
+    window.resetStrikes = async (uid) => {
+        if (!confirm("Clear all strikes for this user?")) return;
+        await updateDoc(doc(db, "users", uid), { 
+            strikes: 0,
+            strikeHistory: [] 
+        });
+        alert("Strikes cleared.");
     };
 
     // --- Event Type Logic ---

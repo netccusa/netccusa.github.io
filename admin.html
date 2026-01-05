@@ -155,7 +155,7 @@
     import { 
       getFirestore, doc, getDoc, setDoc, collection, onSnapshot, 
       updateDoc, deleteDoc, addDoc, getDocs, writeBatch, increment,
-      query, where, orderBy 
+      query, where, orderBy, arrayUnion 
     } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-firestore.js";
     import firebaseConfig from './config.js';
 
@@ -413,16 +413,9 @@
         const newStrikeCount = currentStrikes + 1;
 
         try {
+            // 1. Update the strike count and add to the history array
             await updateDoc(doc(db, "users", uid), {
                 strikes: increment(1),
-                strikeHistory: Array.isArray((await getDoc(doc(db, "users", uid))).data().strikeHistory) 
-                    ? increment(1) // Just a placeholder, better to use arrayUnion
-                    : [] 
-            });
-
-            // Use arrayUnion to log the reason
-            import { arrayUnion } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-firestore.js";
-            await updateDoc(doc(db, "users", uid), {
                 strikeHistory: arrayUnion({
                     reason: reason,
                     givenBy: auth.currentUser.email,
@@ -430,10 +423,11 @@
                 })
             });
 
+            // 2. Check if they hit the limit
             if (newStrikeCount >= 3) {
-                alert(`⚠️ CRITICAL: ${email} has reached ${newStrikeCount} strikes! Personnel should be exiled immediately.`);
+                alert(`⚠️ CRITICAL: ${email} has reached 3 strikes! Notify HICOM to exile/fire.`);
                 
-                // Log to history for HICOM visibility
+                // Log to history for visibility
                 await addDoc(collection(db, "event_history"), {
                     hostEmail: email,
                     type: "TERMINATION REQUIRED",
@@ -446,7 +440,7 @@
             }
         } catch (e) {
             console.error("Strike Error:", e);
-            alert("Error applying strike.");
+            alert("Error applying strike: " + e.message);
         }
     };
 

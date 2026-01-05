@@ -30,19 +30,19 @@
 <body>
   <div class="nav-links"><a href="dashboard.html" class="btn-back">← Back to Dashboard</a></div>
   <div class="form-container">
-    <h1>LOA Request</h1>
-    <label>Reason for Leave</label>
+    <h1>LOA and QUOTA Reduction Request</h1>
+    <label>Reason for Reduction / Leave</label>
     <textarea id="loaReason" rows="3" placeholder="e.g. Personal reasons / Exams / Vacation"></textarea>
     
     <label>Duration / End Date</label>
-    <input type="text" id="loaDuration" placeholder="e.g. 1 Week / Until Jan 20th">
+    <input type="text" id="loaDuration" placeholder="e.g. 1 Week / Until Jan 20th / Permanent">
 
     <label>Requested Quota Reduction (%)</label>
     <select id="loaReduction">
         <option value="25">25% Reduction</option>
         <option value="50">50% Reduction</option>
         <option value="75">75% Reduction</option>
-        <option value="100">100% (Full Exemption)</option>
+        <option value="100">100% (Full Exemption / LOA)</option>
     </select>
 
     <button id="submitBtn" class="submit-btn">Submit LOA Request</button>

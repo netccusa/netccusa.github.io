@@ -133,13 +133,14 @@
     #resignBtn:hover { color: #ff4d4d; }
 
     .version-footer {
-      position: fixed;
-      bottom: 15px;
-      font-size: 11px;
-      color: rgba(203, 213, 224, 0.5);
+      margin-top: 30px; /* Space it out from the buttons */
+      font-size: 10px;
+      color: rgba(255, 255, 255, 0.3);
+      text-transform: uppercase;
       letter-spacing: 1px;
-      opacity: 0;
-      animation: fadeIn 1.2s ease-out 0.6s forwards;
+      border-top: 1px solid rgba(255, 255, 255, 0.05);
+      padding-top: 15px;
+      /* Remove position: fixed and bottom: 15px */
     }
   </style>
 </head>
@@ -188,6 +189,7 @@
 
     <button id="logoutBtn" class="logout-action-btn">Logout</button>
     <button id="resignBtn">Resign (Delete Account)</button>
+    <div class="version-footer" id="appVersion"></div>
   </div>
 
   <script type="module">
@@ -301,8 +303,6 @@
 
     document.getElementById("logoutBtn").onclick = () => signOut(auth).then(() => window.location.replace("index.html"));
   </script>
-
-  <div class="version-footer" id="appVersion"></div>
 
   <script type="module">
     import firebaseConfig from './config.js';

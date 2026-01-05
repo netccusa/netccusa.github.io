@@ -9,58 +9,60 @@ import {
   onAuthStateChanged
 } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-auth.js";
 
-// ADD THIS: We need Firestore to look up usernames
-import { getFirestore, doc, getDoc } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-firestore.js";
-
+// Ensure this matches your config precisely
 const firebaseConfig = {
-  apiKey: "AIzaSyBg3KRIIvzkTA8OnrEBsln-aPcjU9DrBA4", // Note: Keep your keys private in production!
+  apiKey: "AIzaSyBg3KRIIvzkTA8OnrEBsln-aPcjU9DrBA4",
   authDomain: "netccusa.firebaseapp.com",
   projectId: "netccusa",
 };
 
 const app = initializeApp(firebaseConfig);
 const auth = getAuth(app);
-const db = getFirestore(app); // Initialize the "Phonebook"
 
-// 1. CHECK IF ALREADY LOGGED IN
+// CHECK IF ALREADY LOGGED IN
 onAuthStateChanged(auth, (user) => {
   if (user) {
+    // If the user is already authenticated, send them straight to dashboard
     window.location.replace("dashboard.html");
   }
 });
 
-window.recaptchaVerifier = new RecaptchaVerifier(auth, 'loginBtn', { 'size': 'invisible' });
+// Initialize Recaptcha for the login button
+window.recaptchaVerifier = new RecaptchaVerifier(auth, 'loginBtn', {
+  'size': 'invisible'
+});
 
-// 2. THE LOGIN LOGIC
 document.getElementById("loginBtn").addEventListener("click", async () => {
-  const username = document.getElementById("username").value.toLowerCase().trim();
+  const email = document.getElementById("email").value;
   const password = document.getElementById("password").value;
 
-  if(!username || !password) {
+  if(!email || !password) {
       alert("Please enter credentials");
       return;
   }
 
   try {
-    // LOOKUP STEP: Find the email associated with this username
-    const userRef = doc(db, "usernames", username); 
-    const userSnap = await getDoc(userRef);
-
-    if (!userSnap.exists()) {
-      alert("Username not found.");
-      return;
-    }
-
-    const email = userSnap.data().email; // We found the email!
-
-    // Now login normally using the email we found
     await signInWithEmailAndPassword(auth, email, password);
     window.location.replace("dashboard.html");
-
   } catch (err) {
-    // ... (Your 2FA code stays exactly the same here)
     if (err.code === 'auth/multi-factor-auth-required') {
-        // [Existing 2FA logic here]
+      const resolver = getMultiFactorResolver(auth, err);
+      
+      const phoneInfoOptions = {
+        multiFactorHint: resolver.hints[0],
+        session: resolver.session
+      };
+      
+      const phoneAuthProvider = new PhoneAuthProvider(auth);
+      const verificationId = await phoneAuthProvider.verifyPhoneNumber(phoneInfoOptions, window.recaptchaVerifier);
+      
+      const code = prompt("2FA Required. Enter the 6-digit code sent to your phone:");
+      if (code) {
+        const cred = PhoneAuthProvider.credential(verificationId, code);
+        const multiFactorAssertion = PhoneMultiFactorGenerator.assertion(cred);
+        await resolver.resolveSignIn(multiFactorAssertion);
+        window.location.replace("dashboard.html");
+      }
     } else {
       alert("Login Error: " + err.message);
     }
